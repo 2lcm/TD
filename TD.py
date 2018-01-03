@@ -21,6 +21,7 @@ class Tower_unit(object):
         self.height = 0
         self.attack_damage = 0
         self.attack_range = 0
+        self.expense = 0
 
     def set(self, n):
         self.width = data[n][0]
@@ -28,9 +29,16 @@ class Tower_unit(object):
         self.attack_damage = data[n][2]
         self.attack_range = data[n][3]
 
+    def upgrade(self):
+        pass
+
 
 class Wandering_unit(object):
-    pass
+    def __init__(self):
+        self.reward = 0
+        self.life = 0
+        self.speed = 0
+        self.level = 0 # speed, life depends on balloon level
 
 
 class TD_App(object):
@@ -44,8 +52,16 @@ class TD_App(object):
         # screen setting
         self.screen = pygame.display.set_mode(screen_size)
 
+        # money to install unit
+        self.budget = 0
+        # If life == 0 --> gameover
+        self.life = 0
+
         # define self variable
         self.num_tower = 0
+
+    def road(self):
+        pass
 
 
     def run(self):
@@ -61,5 +77,3 @@ class TD_App(object):
                         if event.type == pygame.USEREVENT + i:
                             #towers(i).action()
                             pass
-
-
