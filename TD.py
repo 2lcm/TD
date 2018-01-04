@@ -13,6 +13,7 @@ colors = {
 screen_size = 1000, 700
 
 map_img = pygame.image.load("map1.png")
+map_rect = map_img.get_rect()
 
 
 class Tower_unit(object):
@@ -79,12 +80,13 @@ class TD_App(object):
 
     def run(self):
         key_actions = {
-            'EXCAPE': sys.exit,
+            'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
+            self.screen.blit(map_img, map_rect)
             pygame.display.update()
 
             for event in pygame.event.get():
@@ -99,9 +101,9 @@ class TD_App(object):
                         if event.type == pygame.USEREVENT + i + 1:
                             self.towers[i].action = True
 
-            for i in range(self.num_tower):
-                target = self.find_target(i)
-                # do action
+            # for i in range(self.num_tower):
+            #     target = self.find_target(i)
+            #     # do action
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -116,12 +118,5 @@ class TD_App(object):
 
 
 if __name__ == '__main__':
-    screen = pygame.display.set_mode(screen_size)
-    map_rect = map_img.get_rect()
-    while 1:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-
-        screen.blit(map_img, map_rect)
-        pygame.display.update()
+    TD = TD_App()
+    TD.run()
