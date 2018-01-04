@@ -21,11 +21,9 @@ class Tower_unit(object):
         self.height = 0
         self.attack_damage = 0
         self.attack_range = 0
-<<<<<<< HEAD
         self.expense = 0
-=======
         self.action = False
->>>>>>> 3c7d290a9f5b08915edbc3fd304373574c7b56e6
+
 
     def set(self, n):
         self.width = data[n][0]
@@ -66,14 +64,10 @@ class TD_App(object):
         self.gameover = False
         self.paused = False
         self.num_tower = 0
-<<<<<<< HEAD
 
     def road(self):
         pass
-
-=======
         self.towers = []
->>>>>>> 3c7d290a9f5b08915edbc3fd304373574c7b56e6
 
     def run(self):
         key_actions = {
@@ -93,12 +87,6 @@ class TD_App(object):
                         if event.key == eval("pygame.K_" + key):
                             key_actions[key]()
                 else:
-<<<<<<< HEAD
-                    for i in range(1, self.num_tower):
-                        if event.type == pygame.USEREVENT + i:
-                            #towers(i).action()
-                            pass
-=======
                     for i in range(self.num_tower):
                         if event.type == pygame.USEREVENT + i + 1:
                             self.towers[i].action = True
@@ -114,4 +102,3 @@ class TD_App(object):
         #towers[tower_index]
         target = None
         return target
->>>>>>> 3c7d290a9f5b08915edbc3fd304373574c7b56e6
