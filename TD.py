@@ -75,11 +75,14 @@ class TD_App(object):
         # define self variable
         self.gameover = False
         self.paused = False
-        self.num_tower = 0
+        self.towers = []
+        self.balloons = []
 
     def road(self):
         pass
-        self.towers = []
+
+    def draw_unit(self, unit):
+        pass
 
     def run(self):
         key_actions = {
@@ -90,7 +93,7 @@ class TD_App(object):
             # draw screen
             self.screen.fill((255, 255, 255))
             self.screen.blit(map_img, map_rect)
-            for i in range(self.num_tower):
+            for i in range(len(self.towers)):
                 self.draw_unit(self.towers[i])
                 pass
             pygame.display.update()
@@ -103,11 +106,11 @@ class TD_App(object):
                         if event.key == eval("pygame.K_" + key):
                             key_actions[key]()
                 else:
-                    for i in range(self.num_tower):
+                    for i in range(len(self.towers)):
                         if event.type == pygame.USEREVENT + i + 1:
                             self.towers[i].action = True
 
-            # for i in range(self.num_tower):
+            # for i in range(len(self.towers)):
             #     target = self.find_target(i)
             #     # do action
 
