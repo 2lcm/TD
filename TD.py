@@ -1,18 +1,18 @@
 import pygame
 import sys
 
-# data set
-# width = 0
-# height = 1
-# attack_damage = 2
-# attack_range = 3
-data = [
-    [50, 30, 10, 50],
-    [40, 60, 20, 60],
-    [50, 50, 30, 70]
-]
+# constants
+MAP_INDEX = 0
+ROAD_INDEX = 1
+
+colors = {
+    (255, 255, 255),
+    (255, 140, 50)
+}
 
 screen_size = 1000, 700
+
+map_img = pygame.image.load("map1.png")
 
 
 class Tower_unit(object):
@@ -24,12 +24,8 @@ class Tower_unit(object):
         self.expense = 0
         self.action = False
 
-
     def set(self, n):
-        self.width = data[n][0]
-        self.height = data[n][1]
-        self.attack_damage = data[n][2]
-        self.attack_range = data[n][3]
+        pass
         # self.action - data[n][4]
 
     def upgrade(self):
@@ -44,13 +40,25 @@ class Wandering_unit(object):
         self.level = 0 # speed, life depends on balloon level
 
 
+class Map(object):
+    def __init__(self):
+        pygame.init()
+        self.width = 1000
+        self.height = 700
+        self.road_width = 50
+        map = pygame.Surface((self.width, self.height))
+        map.fill(colors[MAP_INDEX])
+
+
+
+
 class TD_App(object):
     def __init__(self):
         # pygame setting
         pygame.init()
-        self.default_font = pygame.font.Font(
-            pygame.font.get_default_font(), 12
-        )
+        # self.default_font = pygame.font.Font(
+        #     pygame.font.get_default_font(), 12
+        # )
 
         # screen setting
         self.screen = pygame.display.set_mode(screen_size)
@@ -102,3 +110,18 @@ class TD_App(object):
         #towers[tower_index]
         target = None
         return target
+
+    def test(self):
+        pass
+
+
+if __name__ == '__main__':
+    screen = pygame.display.set_mode(screen_size)
+    map_rect = map_img.get_rect()
+    while 1:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        screen.blit(map_img, map_rect)
+        pygame.display.update()
