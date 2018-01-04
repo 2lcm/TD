@@ -5,21 +5,29 @@ import sys
 MAP_INDEX = 0
 ROAD_INDEX = 1
 
-colors = {
-    (255, 255, 255),
-    (255, 140, 50)
-}
-
 screen_size = 1000, 700
+
+# RGBA color
+colors = {
+    (14, 209, 69, 255),
+    (185, 122, 86, 255)
+}
 
 map_img = pygame.image.load("map1.png")
 map_rect = map_img.get_rect()
 
 
-class Tower_unit(object):
+class Unit(object):
     def __init__(self):
+        self.x = 0
+        self.y = 0
         self.width = 0
         self.height = 0
+
+
+class Tower_unit(Unit):
+    def __init__(self):
+        super().__init__()
         self.attack_damage = 0
         self.attack_range = 0
         self.expense = 0
@@ -33,12 +41,13 @@ class Tower_unit(object):
         pass
 
 
-class Wandering_unit(object):
+class Balloon_unit(Unit):
     def __init__(self):
+        super().__init__()
         self.reward = 0
         self.life = 0
         self.speed = 0
-        self.level = 0 # speed, life depends on balloon level
+        self.level = 0  # speed, life depends on balloon level
 
 
 class Map(object):
@@ -48,9 +57,6 @@ class Map(object):
         self.height = 700
         self.road_width = 50
         map = pygame.Surface((self.width, self.height))
-        map.fill(colors[MAP_INDEX])
-
-
 
 
 class TD_App(object):
@@ -87,6 +93,9 @@ class TD_App(object):
             # draw screen
             self.screen.fill((255, 255, 255))
             self.screen.blit(map_img, map_rect)
+            for i in range(self.num_tower):
+                self.draw_unit(self.towers[i])
+                pass
             pygame.display.update()
 
             for event in pygame.event.get():
