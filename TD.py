@@ -2,10 +2,11 @@ import pygame
 import sys
 
 # constants
+SCREEN_SIZE = 1000, 700
+ROAD_WIDTH = 70
 MAP_INDEX = 0
 ROAD_INDEX = 1
 
-screen_size = 1000, 700
 
 # RGBA color
 colors = {
@@ -52,11 +53,7 @@ class Balloon_unit(Unit):
 
 class Map(object):
     def __init__(self):
-        pygame.init()
-        self.width = 1000
-        self.height = 700
-        self.road_width = 50
-        map = pygame.Surface((self.width, self.height))
+        pass
 
 
 class TD_App(object):
@@ -68,7 +65,7 @@ class TD_App(object):
         # )
 
         # screen setting
-        self.screen = pygame.display.set_mode(screen_size)
+        self.screen = pygame.display.set_mode(SCREEN_SIZE)
 
         # money to install unit
         self.budget = 0
