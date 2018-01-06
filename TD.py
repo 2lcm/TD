@@ -82,7 +82,7 @@ class TD_App(object):
         pass
 
     def draw_unit(self, unit):
-        pass
+        f
 
     def run(self):
         key_actions = {
@@ -95,6 +95,9 @@ class TD_App(object):
             self.screen.blit(map_img, map_rect)
             for i in range(len(self.towers)):
                 self.draw_unit(self.towers[i])
+                pass
+            for i in range(len(self.balloons)):
+                self.draw_unit(self.balloons[i])
                 pass
             pygame.display.update()
 
