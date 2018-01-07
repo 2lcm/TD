@@ -127,17 +127,24 @@ class TD_App(object):
         # define self variable
         self.gameover = False
         self.paused = False
-        self.towers = []
-        self.balloons = []
 
     def draw_unit(self, unit):
         pass
+
+    def balloon_storage(self):
+        for i in range(5):
+            temp_balloon = Balloon_unit()
+            temp_balloon.set(1)
+            BALLOONS.append(temp_balloon)
 
     def run(self):
         key_actions = {
             'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
+
+        pygame.time.set_timer(pygame.USEREVENT + 1 , 1000)
+
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
@@ -158,26 +165,14 @@ class TD_App(object):
                         if event.key == eval("pygame.K_" + key):
                             key_actions[key]()
                 else:
-                    for i in range(len(self.towers)):
+                    for i in range(len(TOWERS)):
                         if event.type == pygame.USEREVENT + i + 2:
-                            self.towers[i].action = True
+                            TOWERS[i].action = True
 
-            for i in range(len(self.towers)):
-                target = self.find_target(i)
-                # do action
 
-            for i in range(len(self.balloons)):
-                self.balloons[i].center =
-
-            balloon_rect.center = temp_balloon.move()
 
     def toggle_pause(self):
         self.paused = not self.paused
-
-    def find_target(self, tower_index):
-        #towers[tower_index]
-        target = None
-        return target
 
     def test(self):
         pass
