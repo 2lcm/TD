@@ -5,25 +5,16 @@ import time
 
 # pygame.USEREVENT list
 # USEREVENT + 1 : balloon generating timer
-# USEREVENT + (i + 2) : attacking timer of towers[i]
+# USEREVENT + 2 + i : attacking timer of towers[i]
 
 # constants
 SCREEN_SIZE = 1000, 700
 ROAD_WIDTH = 70
-MAP_INDEX = 0
-ROAD_INDEX = 1
 STARTING_POINT = 0, 500
-
-# RGBA color
-colors = {
-    (14, 209, 69, 255),
-    (185, 122, 86, 255)
-}
 
 TOWERS = []
 BALLOONS = []
 DARTS = []
-TIMER = []
 
 # Index | meaning(?)
 # 0 :
@@ -45,7 +36,6 @@ dart_img = pygame.transform.scale(dart_img, (10,10))
 TOWERS = []
 BALLOONS = []
 DARTS = []
-TIMER = []
 
 class Unit(object):
     def __init__(self):
@@ -61,10 +51,10 @@ class Unit(object):
 class Dart_unit(Unit):
     def __init__(self, tower_index, target_index):
         super().__init__()
-        self.x, self.y =  TOWERS[tower_index].x, TOWERS[tower_index].y
+        self.x, self.y = TOWERS[tower_index].x, TOWERS[tower_index].y
         self.speed = BALLOONS[target_index].x - self.x, BALLOONS[target_index].y - self.y
         self.rect = dart_img.get_rect()
-        self.rect.center =  self.x, self.y
+        self.rect.center = self.x, self.y
 
 
 class Tower_unit(Unit):
@@ -80,6 +70,8 @@ class Tower_unit(Unit):
     def set(self, position):
         self.x, self.y = position
         self.attack_range = 500
+        self.rect = tower_img.get_rect()
+        self.rect.center = self.x, self.y
 
     def upgrade(self):
         pass
@@ -103,7 +95,8 @@ class Balloon_unit(Unit):
 
     def set(self, level):
         self.x, self.y = STARTING_POINT
-        pygame.Rect(self.x, self.y, ROAD_WIDTH, ROAD_WIDTH)
+        self.rect = balloon_img.get_rect()
+        self.rect.center = self.x, self.y
         self.level = level
         self.speed = [1,0]
 
@@ -128,8 +121,9 @@ class TD_App(object):
         self.gameover = False
         self.paused = False
 
-    def draw_unit(self, unit):
-        pass
+    def draw_unit(self, unit, tp):
+        p = unit.rect.x, unit.rect.y
+        eval("self.screen.blit(" + tp + "_img, p)")
 
     def balloon_storage(self):
         for i in range(5):
@@ -143,17 +137,20 @@ class TD_App(object):
             'p': self.toggle_pause
         }
 
+<<<<<<< HEAD
         pygame.time.set_timer(pygame.USEREVENT + 1 , 1000)
 
+=======
+>>>>>>> dbb10ff116f9b953e828e58703725fa63003cdfa
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
             for i in range(len(TOWERS)):
-                self.draw_unit(TOWERS[i])
+                self.draw_unit(TOWERS[i], "tower")
             for i in range(len(BALLOONS)):
-                self.draw_unit(BALLOONS[i])
+                self.draw_unit(BALLOONS[i], "balloon")
             for i in range(len(DARTS)):
-                self.draw_unit(DARTS[i])
+                self.draw_unit(DARTS[i], "dart")
 
             pygame.display.update()
 
@@ -169,18 +166,41 @@ class TD_App(object):
                         if event.type == pygame.USEREVENT + i + 2:
                             TOWERS[i].action = True
 
+<<<<<<< HEAD
 
+=======
+            # do tower action
+            for tower_index in range(len(TOWERS)):
+                pass
+>>>>>>> dbb10ff116f9b953e828e58703725fa63003cdfa
 
     def toggle_pause(self):
         self.paused = not self.paused
 
     def test(self):
-        pass
+        A = Balloon_unit()
+        A.set(1)
+        BALLOONS.append(A)
+        while True:
+            # draw screen
+            self.screen.fill((255, 255, 255))
+            for i in range(len(TOWERS)):
+                self.draw_unit(TOWERS[i], "tower")
+            for i in range(len(BALLOONS)):
+                self.draw_unit(BALLOONS[i], "balloon")
+            for i in range(len(DARTS)):
+                self.draw_unit(DARTS[i], "dart")
 
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+        pass
 
 if __name__ == '__main__':
     TD = TD_App()
-    TD.run()
+    TD.test()
 
 
 # test
