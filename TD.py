@@ -138,22 +138,16 @@ class TD_App(object):
             'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
-        temp_balloon = Balloon_unit()
-        temp_tower = Tower_unit()
-        tower_rect.center = temp_tower.position()
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
-            self.screen.blit(map_img, map_rect)
-            self.screen.blit(tower_img, tower_rect)
-            for i in range(len(self.towers)):
-                self.draw_unit(self.towers[i])
-                pass
+            for i in range(len(TOWERS)):
+                self.draw_unit(TOWERS[i])
+            for i in range(len(BALLOONS)):
+                self.draw_unit(BALLOONS[i])
+            for i in range(len(DARTS)):
+                self.draw_unit(DARTS[i])
 
-            # print(temp_balloon.move())
-            # temp_tower.attack(temp_balloon.move()[0], temp_balloon.move()[1])
-
-            self.screen.blit(balloon_img, balloon_rect)
             pygame.display.update()
 
             for event in pygame.event.get():
