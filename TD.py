@@ -20,51 +20,58 @@ colors = {
 map_img = pygame.image.load("map1.png")
 map_rect = map_img.get_rect()
 balloon_img = pygame.image.load("balloon.png")
+balloon_img = pygame.transform.scale(balloon_img, (70,70))
 balloon_rect = balloon_img.get_rect()
 
+
+dart_img = pygame.image.load("needle.png")
+dart_img = pygame.transform.scale(dart_img, (10,10))
 tower_img  = pygame.image.load("tower.png")
+tower_img = pygame.transform.scale(tower_img, (70,70))
 tower_rect = tower_img.get_rect()
 
+TOWERS = []
+BALLOONS = []
+DARTS = []
+TIMER = []
 
 class Unit(object):
     def __init__(self):
         self.x = 0
         self.y = 0
-        self.width = 0
-        self.height = 0
+        self.speed = []
+        self.rect = None
 
+class Dart_unit(Unit):
+    def __init__(self, tower_index, target_index):
+        super().__init__()
+        self.x, self.y =  TOWERS[tower_index].x, TOWERS[tower_index].y
+        self.speed = BALLOONS[target_index].x - self.x, BALLOONS[target_index].y - self.y
+        self.rect = dart_img.get_rect()
+        self.rect.center =  self.x, self.y
 
 class Tower_unit(Unit):
 
-    temp_Unit = Unit()
     def __init__(self):
         super().__init__()
-        self.attack_damage = 0
         self.attack_range = 0
         self.expense = 0
         self.action = False
-        self.x = 750
-        self.y = 350
 
     def position(self):
         return (self.x, self.y)
 
-    def set(self, n):
-        pass
-        # self.action - data[n][4]
+    def set(self, position):
+        self.x, self.y = position
+        self.attack_range = 500
 
     def upgrade(self):
         pass
 
-    def attack(self, balloon_x, balloon_y):
-        self.temp_balloon = np.array([0, 0])
-        self.temp_tower = np.array([3, 5])
-        self.speed = np.array([0.1, 0.1])
-        self.temp_balloon = [self.temp_balloon[0] + self.speed[0], self.temp_balloon[1] + self.speed[1]]
-        self.temp_balloon = [balloon_x, balloon_y]
+    def find_target(self, balloon_x, balloon_y):
+        temp_balloon = np.array([balloon_x, balloon_y])
 
-        print(np.sum((self.temp_balloon - self.temp_tower)**2) )
-        if np.sqrt(np.sum((self.temp_balloon - self.temp_tower)**2)) < 500:
+        if np.sum((temp_balloon - np.array([self.x, self.y]))**2) < self.attack_range**2:
             print("It can attack now")
             return True
         else:
@@ -81,17 +88,16 @@ class Balloon_unit(Unit):
         super().__init__()
         self.reward = 0
         self.life = 1
-        self.speed = 0
         self.level = 0  # speed, life depends on balloon level
         self.live = True
         self.x = 0
-        self.y = 700
+        self.y = 500
     def move(self):
         time.sleep(0.01)
         if self.life == 0 :
             self.live = False
         if self.live ==True:
-            if self.x < 250 and self.y ==700:
+            if self.x < 250 and self.y ==500:
                 self.x+=1
             elif  self.y >200:
                 self.y-=1
@@ -150,7 +156,6 @@ class TD_App(object):
             'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
-
         temp_balloon = Balloon_unit()
         temp_tower = Tower_unit()
         tower_rect.center = temp_tower.position()
