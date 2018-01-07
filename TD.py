@@ -38,6 +38,14 @@ balloon_img = pygame.transform.scale(balloon_img, (ROAD_WIDTH, ROAD_WIDTH))
 tower_img = pygame.image.load("tower.png")
 tower_img = pygame.transform.scale(tower_img, (ROAD_WIDTH, ROAD_WIDTH))
 
+dart_img = pygame.image.load("needle.png")
+dart_img = pygame.transform.scale(dart_img, (10,10))
+
+
+TOWERS = []
+BALLOONS = []
+DARTS = []
+TIMER = []
 
 class Unit(object):
     def __init__(self):
@@ -50,6 +58,15 @@ class Unit(object):
         self.rect.center = self.x + self.speed[0], self.y + self.speed[1]
 
 
+class Dart_unit(Unit):
+    def __init__(self, tower_index, target_index):
+        super().__init__()
+        self.x, self.y =  TOWERS[tower_index].x, TOWERS[tower_index].y
+        self.speed = BALLOONS[target_index].x - self.x, BALLOONS[target_index].y - self.y
+        self.rect = dart_img.get_rect()
+        self.rect.center =  self.x, self.y
+
+
 class Tower_unit(Unit):
     def __init__(self):
         super().__init__()
@@ -59,6 +76,23 @@ class Tower_unit(Unit):
 
     def position(self):
         return (self.x, self.y)
+
+    def set(self, position):
+        self.x, self.y = position
+        self.attack_range = 500
+
+    def upgrade(self):
+        pass
+
+    def find_target(self, balloon_x, balloon_y):
+        temp_balloon = np.array([balloon_x, balloon_y])
+
+        if np.sum((temp_balloon - np.array([self.x, self.y]))**2) < self.attack_range**2:
+            print("It can attack now")
+            return True
+        else:
+            print("It can not attack now")
+            return False
 
 
 class Balloon_unit(Unit):
@@ -104,7 +138,6 @@ class TD_App(object):
             'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
-
         temp_balloon = Balloon_unit()
         temp_tower = Tower_unit()
         tower_rect.center = temp_tower.position()
