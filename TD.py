@@ -134,6 +134,7 @@ class TD_App(object):
         p = unit.rect.x, unit.rect.y
         eval("self.screen.blit(" + ty + "_img, p)")
 
+
     def run(self):
         key_actions = {
             'ESCAPE': sys.exit,
@@ -246,4 +247,10 @@ if __name__ == '__main__':
 ## It is just for testing
 # temp_balloon = Balloon_unit()
 # temp_balloon.move()
-#########################
+############################################
+# def balloon_storage(self):
+#     for i in range(5):
+#         temp_balloon = Balloon_unit()
+#         temp_balloon.set(1)
+#         BALLOONS.append(temp_balloon)
+#############################################
