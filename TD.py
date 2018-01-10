@@ -3,14 +3,19 @@ import sys
 import numpy as np
 import time
 
+maxfps = 100
+
 # pygame.USEREVENT list
 # USEREVENT + 1 : balloon generating timer
 # USEREVENT + 2 + i : attacking timer of towers[i]
 
 # constants
 SCREEN_SIZE = 1000, 700
-ROAD_WIDTH = 70
-STARTING_POINT = 0, 500
+MAP_SIZE = 800, 600
+ROAD_WIDTH = 55
+MAP_POINT = 0, 100
+STARTING_POINT = -ROAD_WIDTH, 545
+STARTING_POINT_CENTER = STARTING_POINT[0] + int(ROAD_WIDTH/2), STARTING_POINT[1] + int(ROAD_WIDTH/2)
 
 TOWERS = []
 BALLOONS = []
@@ -21,7 +26,9 @@ DARTS = []
 database = []
 
 map_img = pygame.image.load("map1.png")
+map_img = pygame.transform.scale(map_img, MAP_SIZE)
 map_rect = map_img.get_rect()
+map_rect = map_rect.move(MAP_POINT)
 
 balloon_img = pygame.image.load("balloon.png")
 balloon_img = pygame.transform.scale(balloon_img, (ROAD_WIDTH, ROAD_WIDTH))
@@ -37,6 +44,7 @@ TOWERS = []
 BALLOONS = []
 DARTS = []
 
+
 class Unit(object):
     def __init__(self):
         self.x = 0
@@ -45,7 +53,8 @@ class Unit(object):
         self.rect = None
 
     def move(self):
-        self.rect.center = self.x + self.speed[0], self.y + self.speed[1]
+        self.rect = self.rect.move(self.speed)
+        self.x, self.y = self.rect.center
 
 
 class Dart_unit(Unit):
@@ -90,15 +99,15 @@ class Tower_unit(Unit):
 class Balloon_unit(Unit):
     def __init__(self):
         super().__init__()
-        #self.reward
+        self.reward = 0
         self.level = 0  # speed, life depends on balloon level
 
     def set(self, level):
-        self.x, self.y = STARTING_POINT
         self.rect = balloon_img.get_rect()
-        self.rect.center = self.x, self.y
+        self.rect = self.rect.move(STARTING_POINT)
+        self.x, self.y = self.rect.center
         self.level = level
-        self.speed = [1,0]
+        self.speed = [1, 0]
 
 
 class TD_App(object):
@@ -112,36 +121,38 @@ class TD_App(object):
         # screen setting
         self.screen = pygame.display.set_mode(SCREEN_SIZE)
 
-        # money to install unit
-        self.budget = 0
-        # If life == 0 --> gameover
-        self.life = 0
+        # status of the stage
+        self.budget = 0  # money to install unit
+        self.life = 0  # If life == 0 --> gameover
 
-        # define self variable
+        # status of overall game
         self.gameover = False
         self.paused = False
+        self.stage = 1
 
-    def draw_unit(self, unit, tp):
+    def draw_unit(self, unit, ty):
         p = unit.rect.x, unit.rect.y
-        eval("self.screen.blit(" + tp + "_img, p)")
+        eval("self.screen.blit(" + ty + "_img, p)")
 
-    def balloon_storage(self):
-        for i in range(5):
-            temp_balloon = Balloon_unit()
-            temp_balloon.set(1)
-            BALLOONS.append(temp_balloon)
 
     def run(self):
         key_actions = {
             'ESCAPE': sys.exit,
             'p': self.toggle_pause
         }
+<<<<<<< HEAD
         pygame.time.set_timer(pygame.USEREVENT + 1 , 1000)
 
 
+=======
+
+        self.start_stage()
+
+>>>>>>> 40de7f7691d50506909974d8c1880c1147a138b5
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
+            self.screen.blit(map_img, map_rect.topleft)
             for i in range(len(TOWERS)):
                 self.draw_unit(TOWERS[i], "tower")
             for i in range(len(BALLOONS)):
@@ -159,45 +170,87 @@ class TD_App(object):
                         if event.key == eval("pygame.K_" + key):
                             key_actions[key]()
                 else:
+                    if event.type == pygame.USEREVENT + 1:  # generating balloon timer
+                        self.create_balloon()
                     for i in range(len(TOWERS)):
                         if event.type == pygame.USEREVENT + i + 2:
                             TOWERS[i].action = True
 
+<<<<<<< HEAD
 
             # do tower action
             for tower_index in range(len(TOWERS)):
                 pass
 
+=======
+            # do tower action
+            for tower_index in range(len(TOWERS)):
+                pass
+>>>>>>> 40de7f7691d50506909974d8c1880c1147a138b5
 
+            # do balloon action
+            for balloon_index in range(len(BALLOONS)-1, -1, -1):
+                bln = BALLOONS[balloon_index]
+                bln.move()
+                # change speed at turning point
+                if bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1]):
+                    bln.speed = [0, -1]
+                elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1] - 310):
+                    bln.speed = [1, 0]
+                elif self.out_of_map(bln):
+                    del BALLOONS[balloon_index]
+
+
+    # toggle self.paused variable
     def toggle_pause(self):
         self.paused = not self.paused
 
+    # create balloon
+    def create_balloon(self):
+        BALLOONS.append(Balloon_unit())
+        BALLOONS[-1].set(1)
+
+    # initialize variable and timer to start each stage
+    def start_stage(self):
+        self.budget = 0
+        self.life = 10
+        pygame.time.set_timer(pygame.USEREVENT + 1, 1000)
+
+    def out_of_map(self, unit):
+        X = map_rect.collidepoint(unit.rect.topleft)
+        X = X or map_rect.collidepoint(unit.rect.topright)
+        X = X or map_rect.collidepoint(unit.rect.bottomleft)
+        X = X or map_rect.collidepoint(unit.rect.bottomright)
+        if X:
+            return False
+        return True
+
+    # function to test or debug
     def test(self):
-        A = Balloon_unit()
-        A.set(1)
-        BALLOONS.append(A)
+        self.start_stage()
+
+        self.create_balloon()
+
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
-            for i in range(len(TOWERS)):
-                self.draw_unit(TOWERS[i], "tower")
+            self.screen.blit(map_img, (0, 0))
             for i in range(len(BALLOONS)):
                 self.draw_unit(BALLOONS[i], "balloon")
-            for i in range(len(DARTS)):
-                self.draw_unit(DARTS[i], "dart")
 
             pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-        pass
+        pass  # not to be compile error
+
 
 if __name__ == '__main__':
     TD = TD_App()
-    TD.test()
+    TD.run()
 
-
+# comments not to usage
 # test
 #########################
 ## It is just for testing
@@ -208,4 +261,10 @@ if __name__ == '__main__':
 ## It is just for testing
 # temp_balloon = Balloon_unit()
 # temp_balloon.move()
-#########################
+############################################
+# def balloon_storage(self):
+#     for i in range(5):
+#         temp_balloon = Balloon_unit()
+#         temp_balloon.set(1)
+#         BALLOONS.append(temp_balloon)
+#############################################
