@@ -48,7 +48,7 @@ tower_img = pygame.image.load("tower.png")
 tower_img = pygame.transform.scale(tower_img, (ROAD_WIDTH, ROAD_WIDTH))
 
 dart_img = pygame.image.load("needle.png")
-dart_img = pygame.transform.scale(dart_img, (10,10))
+dart_img = pygame.transform.scale(dart_img, (100,100))
 
 
 TOWERS = []
@@ -67,12 +67,12 @@ class Unit(object):
         self.rect = self.rect.move(self.speed)
         self.x, self.y = self.rect.center
 
-
 class Dart_unit(Unit):
     def __init__(self, tower_index, target_index):
         super().__init__()
         self.x, self.y = TOWERS[tower_index].x, TOWERS[tower_index].y
         self.speed = BALLOONS[target_index].x - self.x, BALLOONS[target_index].y - self.y
+        self.speed = [i/np.linalg.norm(self.speed) * 5 for i in self.speed]
         self.rect = dart_img.get_rect()
         self.rect.center = self.x, self.y
 
@@ -80,30 +80,35 @@ class Dart_unit(Unit):
 class Tower_unit(Unit):
     def __init__(self):
         super().__init__()
-        self.attack_range = 0
+        self.attack_range = 100
         #self.expense = 0
         self.action = False
+        self.myballoon_index = None
+
+    def attack(self):
+        if self.action == True:
+            Dart_unit
+
 
     def position(self):
         return (self.x, self.y)
 
     def set(self, position):
         self.x, self.y = position
-        self.attack_range = 500
         self.rect = tower_img.get_rect()
         self.rect.center = self.x, self.y
 
     def upgrade(self):
         pass
 
-    def find_target(self, balloon_x, balloon_y):
-        temp_balloon = np.array([balloon_x, balloon_y])
-
-        if np.sum((temp_balloon - np.array([self.x, self.y]))**2) < self.attack_range**2:
-            print("It can attack now")
+    def find_target(self, myballoon):
+        if np.sum((np.array([myballoon.x, myballoon.y]) - np.array([self.x, self.y]))**2) < self.attack_range**2:
+            # print(np.sum((np.array([myballoon.x, myballoon.y]) - np.array([self.x, self.y]))**2) )
+            # print(self.attack_range**2)
+            # print("It can attack now")
             return True
         else:
-            print("It can not attack now")
+            # print("It can not attack now")
             return False
 
 
@@ -171,6 +176,7 @@ class TD_App(object):
             'p': self.toggle_pause
         }
 
+
         self.start_stage()
         fps_clk = pygame.time.Clock()
         while True:
@@ -200,6 +206,11 @@ class TD_App(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
+                elif pygame.mouse.get_pressed()[0]: # when left click
+                    click_spot = pygame.mouse.get_pos()
+                    self.create_tower(click_spot)
+
+                    # print(pygame.mouse.get_pos())
                 elif event.type == pygame.KEYDOWN:
                     for key in key_actions:
                         if event.key == eval("pygame.K_" + key):
@@ -208,12 +219,55 @@ class TD_App(object):
                     if event.type == pygame.USEREVENT + 1:  # generating balloon timer
                         self.create_balloon()
                     for i in range(len(TOWERS)):
-                        if event.type == pygame.USEREVENT + i + 2:
+                        if event.type == pygame.USEREVENT + i + 2 :
                             TOWERS[i].action = True
+                            pygame.time.set_timer(pygame.USEREVENT + i + 2, 0)
+                        else:
+                            pass
+                            # DARTS
+
+
 
             # do tower action
             for tower_index in range(len(TOWERS)):
-                pass
+                temp_tower = TOWERS[tower_index]
+                if temp_tower.action:
+                    for temp_index in range(len(BALLOONS)):
+                        if temp_tower.find_target(BALLOONS[temp_index]):
+                            print("create dart is working here")
+                            self.create_dart(tower_index, temp_index)
+                            pygame.time.set_timer(pygame.USEREVENT + tower_index + 2, 1000)
+                            temp_tower.action = False
+                            break
+            # for tower_index in range(len(TOWERS)):
+            #     temp_tower = TOWERS[tower_index]
+            #     if temp_tower.action:
+            #         if temp_tower.myballoon_index != None and temp_tower.find_target(BALLOONS[temp_tower.myballoon_index]) == True:
+            #             # pygame.time.set_timer(pygame.USEREVENT + tower_index + 2, 1000)
+            #             target_index = temp_tower.myballoon_index
+            #             # print('my balloon position : ', BALLOONS[target_index].x)
+            #             print('Tower{} is attacking balloon {}'.format(tower_index, target_index))
+            #             self.create_dart(tower_index, target_index)
+            #             temp_tower.action = False
+            #         else:
+            #             temp_tower.myballoon_index = None
+            #         if temp_tower.myballoon_index == None:
+            #             for temp_index in range(len(BALLOONS)):
+            #                 if temp_tower.find_target(BALLOONS[temp_index]):
+            #                     temp_tower.myballoon_index = temp_index
+            #                     self.create_dart(tower_index, target_index)
+            #                     temp_tower.action = False
+            #                     break
+
+
+            for dart_index in range(len(DARTS)-1, -1, -1):
+                temp_dart = DARTS[dart_index]
+                if not self.out_of_map(temp_dart):
+                    temp_dart.move()
+                else:
+                    DARTS.remove(temp_dart)
+
+
 
             # do balloon action
             for balloon_index in range(len(BALLOONS)-1, -1, -1):
@@ -260,11 +314,26 @@ class TD_App(object):
     # toggle self.paused variable
     def toggle_pause(self):
         self.paused = not self.paused
+    def create_dart(self, tower_index, target_index):
+        DARTS.append(Dart_unit(tower_index, target_index))
+
 
     # create balloon
     def create_balloon(self):
         BALLOONS.append(Balloon_unit())
         BALLOONS[-1].set(1)
+
+    def create_tower(self, position):
+        temp = Tower_unit()
+        temp.set(position)
+        print(temp.rect.collidelist(TOWERS[:-1]))
+        if temp.rect.collidelist(TOWERS) == -1:
+            TOWERS.append(Tower_unit())
+            TOWERS[-1].set(position)
+            pygame.time.set_timer(pygame.USEREVENT + len(TOWERS) + 1, 1000)
+        else:
+            print('not working')
+
 
     # initialize variable and timer to start each stage
     def start_stage(self):
