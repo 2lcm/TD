@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import time
 
-maxfps = 100
+maxfps = 30
 
 # pygame.USEREVENT list
 # USEREVENT + 1 : balloon generating timer
@@ -131,6 +131,7 @@ class TD_App(object):
 
         # screen setting
         self.screen = pygame.display.set_mode(SCREEN_SIZE)
+        pygame.event.set_blocked((pygame.VIDEOEXPOSE, pygame.VIDEORESIZE))
 
         # status of the stage
         self.budget = 0  # money to install unit
@@ -171,7 +172,7 @@ class TD_App(object):
         }
 
         self.start_stage()
-
+        fps_clk = pygame.time.Clock()
         while True:
             # draw screen
             self.screen.fill((255, 255, 255))
@@ -226,6 +227,35 @@ class TD_App(object):
                 elif self.out_of_map(bln):
                     del BALLOONS[balloon_index]
                     self.life -= 1
+            if self.life < 1:
+                self.gameover = True
+                break
+            fps_clk.tick(maxfps)
+        if self.gameover:
+            print(1)
+            self.screen.fill((0, 0, 0))
+            self.screen.blit(
+                pygame.font.Font(pygame.font.get_default_font(), 50).render(
+                    "Game over!",
+                    True,
+                    (255, 255, 255)
+                ),
+                (100, 330)
+            )
+            pygame.display.update()
+            pygame.event.clear()
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                        return
+
+        else:
+            print("wtf")
+
+
 
     # toggle self.paused variable
     def toggle_pause(self):
@@ -239,7 +269,7 @@ class TD_App(object):
     # initialize variable and timer to start each stage
     def start_stage(self):
         self.budget = 0
-        self.life = 10
+        self.life = 1
         pygame.time.set_timer(pygame.USEREVENT + 1, 1000)
 
     def out_of_map(self, unit):
