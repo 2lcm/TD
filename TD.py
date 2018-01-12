@@ -16,7 +16,18 @@ ROAD_WIDTH = 55
 MAP_POINT = 0, 100
 STARTING_POINT = -ROAD_WIDTH, 545
 STARTING_POINT_CENTER = STARTING_POINT[0] + int(ROAD_WIDTH/2), STARTING_POINT[1] + int(ROAD_WIDTH/2)
+ICON_SIZE = (65, 65)
 
+# colors
+INTERFACE, MSG, ICON = 0, 1, 2
+
+COLORS = [
+    (int(0xCC), int(0xCC), int(0xCC)),
+    (0, 0, 0),
+    (int(0x55), int(0x55), int(0x55))
+]
+
+# data structures (list) to control units
 TOWERS = []
 BALLOONS = []
 DARTS = []
@@ -119,9 +130,9 @@ class TD_App(object):
     def __init__(self):
         # pygame setting
         pygame.init()
-        # self.default_font = pygame.font.Font(
-        #     pygame.font.get_default_font(), 12
-        # )
+        self.default_font = pygame.font.Font(
+            pygame.font.get_default_font(), 20
+        )
 
         # screen setting
         self.screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -129,6 +140,7 @@ class TD_App(object):
         # status of the stage
         self.budget = 0  # money to install unit
         self.life = 0  # If life == 0 --> gameover
+        self.score = 0
 
         # status of overall game
         self.gameover = False
@@ -139,6 +151,23 @@ class TD_App(object):
         p = unit.rect.x, unit.rect.y
         eval("self.screen.blit(" + ty + "_img, p)")
 
+    def disp_msg(self, msg, topleft):
+        x, y = topleft
+        for line in msg.splitlines():
+            self.screen.blit(
+                self.default_font.render(
+                    line,
+                    False,
+                    COLORS[MSG]),
+                (x, y))
+            y += 24
+
+    def make_button(self, img):
+        new_img = pygame.Surface(ICON_SIZE)
+        pygame.draw.rect(new_img, COLORS[ICON],
+                         pygame.Rect((0, 0), ICON_SIZE))
+        new_img.blit(img, (5, 5))
+        return new_img
 
     def run(self):
         key_actions = {
@@ -159,6 +188,17 @@ class TD_App(object):
                 self.draw_unit(BALLOONS[i], "balloon")
             for i in range(len(DARTS)):
                 self.draw_unit(DARTS[i], "dart")
+            pygame.draw.rect(self.screen, COLORS[INTERFACE],
+                             pygame.Rect(0, 0, map_rect.right, map_rect.top))
+            pygame.draw.rect(self.screen, COLORS[INTERFACE],
+                             pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
+            # display tower buttons
+            button_img = self.make_button(tower_img)
+            self.screen.blit(button_img, (820, 30))
+            # display status
+            self.disp_msg("Stage : " + str(self.stage), (20, 40))
+            self.disp_msg("Score : " + str(self.score), (150, 40))
+            self.disp_msg("Life : " + str(self.life), (280, 40))
 
             pygame.display.update()
 
@@ -239,7 +279,7 @@ class TD_App(object):
                     bln.speed = [1, 0]
                 elif self.out_of_map(bln):
                     del BALLOONS[balloon_index]
-
+                    self.life -= 1
 
     # toggle self.paused variable
     def toggle_pause(self):
