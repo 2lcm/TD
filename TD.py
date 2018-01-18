@@ -1,21 +1,21 @@
 import pygame
 import sys
 import numpy as np
-import time
-
+import LinkedList
 
 
 # constants
 SCREEN_SIZE = 1000, 700
 MAP_SIZE = 800, 600
 ROAD_WIDTH = 55
+BALLOON_WIDETH = 20
 MAP_POINT = 0, 100
-STARTING_POINT = -ROAD_WIDTH, 545
+STARTING_POINT = -ROAD_WIDTH, 545 - BALLOON_WIDETH
 STARTING_POINT_CENTER = STARTING_POINT[0] + int(ROAD_WIDTH/2), STARTING_POINT[1] + int(ROAD_WIDTH/2)
 ICON_SIZE = (65, 65)
 MAXFPS = 50
 
-# colors
+# colors,,kki
 INTERFACE, MSG, ICON = 0, 1, 2
 
 COLORS = [
@@ -26,9 +26,11 @@ COLORS = [
 
 # data structures (list) to control units
 TOWERS = []
+# TOWERS = LinkedList.LL()
 BALLOONS = []
 DARTS = []
-
+# DARTS = LinkedList.LL()
+TIMERS = []
 # Index | meaning(?)
 # 0 :
 database = []
@@ -48,10 +50,7 @@ dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.scale(dart_img, (40, 40))
 
 
-TOWERS = []
-BALLOONS = []
-DARTS = []
-TIMERS = []
+
 
 
 class Unit(object):
@@ -73,6 +72,7 @@ class Dart_unit(Unit):
         self.speed = BALLOONS[target_index].x - self.x, BALLOONS[target_index].y - self.y
         self.speed = [i/np.linalg.norm(self.speed) * 5 for i in self.speed]
         self.rect = dart_img.get_rect()
+        self.rect = self.rect.fit(0,0,10,10)
         self.rect.center = self.x, self.y
 
 
@@ -117,13 +117,17 @@ class Balloon_unit(Unit):
 
     def set(self, level):
         self.rect = balloon_img.get_rect()
+        # self.rect = self.rect.fit(0, 0, 20, 20)  # the move
+        self.rect = self.rect.fit(ROAD_WIDTH -BALLOON_WIDETH, int(ROAD_WIDTH-BALLOON_WIDETH)/2,BALLOON_WIDETH,BALLOON_WIDETH) # It is resized cented at left-upper point
         self.rect = self.rect.move(STARTING_POINT)
         self.x, self.y = self.rect.center
+        print("center is", self.rect.center)
         self.level = level
         self.speed = [1, 0]
+        print('balloon rect size is : ', self.rect)
 
 
-class MyEent(object):
+class MyEvent(object):
     def __init__(self, interval, able = True):
         if (interval <=0) or (type(interval) != int):
             print("interval must be positive integer")
@@ -170,6 +174,11 @@ class TD_App(object):
         p = unit.rect.x, unit.rect.y
         eval("self.screen.blit(" + ty + "_img, p)")
 
+    def draw_unit_test(self, unit, ty):
+        p = unit.rect.x, unit.rect.y
+        print(p)
+        eval("self.screen.blit(" + ty + "_img, p)")
+
     def disp_msg(self, msg, topleft):
         x, y = topleft
         for line in msg.splitlines():
@@ -207,6 +216,13 @@ class TD_App(object):
                 self.draw_unit(BALLOONS[i], "balloon")
             for i in range(len(DARTS)):
                 self.draw_unit(DARTS[i], "dart")
+            # while True:
+            #     current_Node = DARTS.head_node.tail
+            #     if current_Node == DARTS.tail_node:
+            #         break
+            #     self.draw_unit(current_Node.value, "balloon")
+            #     current_Node = current_Node.tail
+
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
                              pygame.Rect(0, 0, map_rect.right, map_rect.top))
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
@@ -226,6 +242,7 @@ class TD_App(object):
                     sys.exit()
                 elif pygame.mouse.get_pressed()[0]: # when left click
                     click_spot = pygame.mouse.get_pos()
+                    # print('click spot is ', click_spot)
                     self.create_tower(click_spot)
 
                     # print(pygame.mouse.get_pos())
@@ -258,17 +275,36 @@ class TD_App(object):
                 temp_dart = DARTS[dart_index]
                 if not self.out_of_map(temp_dart):
                     temp_dart.move()
+                    collide_detector = temp_dart.rect.collidelist(BALLOONS)
+                    if not collide_detector == -1:
+                        DARTS.remove(temp_dart)
+                        BALLOONS.remove(BALLOONS[collide_detector])
+                        self.score +=1
                 else:
                     DARTS.remove(temp_dart)
+            # while True:
+            #     temp_node = DARTS.head_node.tail
+            #     if temp_node == DARTS.tail_node:
+            #         break
+            #     temp_dart = temp_node.value
+            #     if not self.out_of_map(temp_dart):
+            #         temp_dart.move()
+            #         collide_detector = temp_dart.rect.collidelist(BALLOONS)
+            #         if not collide_detector == -1:
+            #             DARTS.delete(temp_node)
+            #             BALLOONS.remove(BALLOONS[collide_detector])
+            #             self.score +=1
+            #     else:
+            #         DARTS.delete(temp_node)
 
             # do balloon action
             for balloon_index in range(len(BALLOONS)-1, -1, -1):
                 bln = BALLOONS[balloon_index]
                 bln.move()
                 # change speed at turning point
-                if bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1]):
+                if bln.rect.center == (STARTING_POINT_CENTER[0] + 470 - BALLOON_WIDETH, STARTING_POINT_CENTER[1]):
                     bln.speed = [0, -1]
-                elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1] - 310):
+                elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470 - BALLOON_WIDETH, STARTING_POINT_CENTER[1] - 310):
                     bln.speed = [1, 0]
                 elif self.out_of_map(bln):
                     del BALLOONS[balloon_index]
@@ -307,7 +343,10 @@ class TD_App(object):
     def toggle_pause(self):
         self.paused = not self.paused
     def create_dart(self, tower_index, target_index):
-        DARTS.append(Dart_unit(tower_index, target_index))
+        # new_node = LinkedList.NODE(Dart_unit(tower_index, target_index))
+        # DARTS.insert(new_node)
+        new_unit = Dart_unit(tower_index, target_index)
+        DARTS.append(new_unit)
 
 
     # create balloon
@@ -322,7 +361,7 @@ class TD_App(object):
         if temp.rect.collidelist(TOWERS) == -1:
             TOWERS.append(Tower_unit())
             TOWERS[-1].set(position)
-            TIMERS.append(MyEent(MAXFPS))
+            TIMERS.append(MyEvent(MAXFPS))
         else:
             print('not working')
 
@@ -331,7 +370,7 @@ class TD_App(object):
     def start_stage(self):
         self.budget = 0
         self.life = 1
-        TIMERS.append(MyEent(MAXFPS * 2))
+        TIMERS.append(MyEvent(MAXFPS * 2))
 
     def out_of_map(self, unit):
         X = map_rect.collidepoint(unit.rect.topleft)
