@@ -2,10 +2,7 @@ import pygame
 import sys
 import numpy as np
 import LinkedList
-<<<<<<< HEAD
-=======
 
->>>>>>> ba93fe1a69ed1819b2ef8e3702a2ec08a1aaa48d
 # constants
 SCREEN_SIZE = 1000, 700
 MAP_SIZE = 800, 600
@@ -49,15 +46,13 @@ dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
 
-<<<<<<< HEAD
+
 # will change to linked list
 TOWERS = []
 BALLOONS = []
 DARTS = []
 
 
-=======
->>>>>>> ba93fe1a69ed1819b2ef8e3702a2ec08a1aaa48d
 
 class Unit(object):
     def __init__(self):
@@ -380,20 +375,19 @@ class TD_App(object):
     def create_tower(self, position):
         temp = Tower_unit()
         temp.set(position)
-<<<<<<< HEAD
+
         print(temp.rect.collidelist(TOWERS[:-1]))
         if temp.rect.collidelist(TOWERS) == -1:
             TOWERS.append(Tower_unit())
             TOWERS[-1].set(position)
 
             TIMERS.append(MyEvent(MAXFPS))
-=======
+
 
         if temp.rect.collidelist(TOWERS.to_list()[0]) == -1:
             TOWERS.insert_value(Tower_unit())
             TOWERS.tail_node.head.value.set(position)
 
->>>>>>> ba93fe1a69ed1819b2ef8e3702a2ec08a1aaa48d
         else:
             print('not working')
 
@@ -401,7 +395,7 @@ class TD_App(object):
     def start_stage(self):
         self.budget = 0
         self.life = 1
-<<<<<<< HEAD
+
         TIMERS.append(MyEvent(MAXFPS * 2))
 =======
 >>>>>>> ba93fe1a69ed1819b2ef8e3702a2ec08a1aaa48d
