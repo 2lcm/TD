@@ -1,12 +1,7 @@
 import pygame
 import sys
 import numpy as np
-<<<<<<< HEAD
 import LinkedList
-
-=======
->>>>>>> bc67d6c7eda40c27aaf47a234ebee1d8bf89ef50
-
 # constants
 SCREEN_SIZE = 1000, 700
 MAP_SIZE = 800, 600
@@ -53,15 +48,11 @@ dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
 
-<<<<<<< HEAD
-
-
-=======
 # will change to linked list
 TOWERS = []
 BALLOONS = []
 DARTS = []
->>>>>>> bc67d6c7eda40c27aaf47a234ebee1d8bf89ef50
+
 
 
 class Unit(object):
@@ -389,10 +380,8 @@ class TD_App(object):
         if temp.rect.collidelist(TOWERS) == -1:
             TOWERS.append(Tower_unit())
             TOWERS[-1].set(position)
-<<<<<<< HEAD
+
             TIMERS.append(MyEvent(MAXFPS))
-=======
->>>>>>> bc67d6c7eda40c27aaf47a234ebee1d8bf89ef50
         else:
             print('not working')
 
@@ -400,11 +389,8 @@ class TD_App(object):
     def start_stage(self):
         self.budget = 0
         self.life = 1
-<<<<<<< HEAD
         TIMERS.append(MyEvent(MAXFPS * 2))
-=======
         self.balloon_timer = MyEvent(MAXFPS * 2)
->>>>>>> bc67d6c7eda40c27aaf47a234ebee1d8bf89ef50
 
     def out_of_map(self, unit):
         X = map_rect.collidepoint(unit.rect.topleft)
