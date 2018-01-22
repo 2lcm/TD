@@ -38,6 +38,7 @@ map_rect = map_rect.move(MAP_POINT)
 
 balloon_img = pygame.image.load("balloon.png")
 balloon_img = pygame.transform.scale(balloon_img, (ROAD_WIDTH, ROAD_WIDTH))
+balloon_img.set_alpha(120)
 
 tower_img = pygame.image.load("tower.png")
 tower_img = pygame.transform.scale(tower_img, (ROAD_WIDTH, ROAD_WIDTH))
@@ -171,6 +172,7 @@ class TD_App(object):
         self.budget = 0  # money to install unit
         self.life = 0  # If life == 0 --> gameover
         self.score = 0
+        self.point = 5
         self.balloon_timer = None
 
         # status of overall game
@@ -203,12 +205,27 @@ class TD_App(object):
                 (x, y))
             y += 24
 
-    def make_button(self, img):
+    def make_button(self, position):
         new_img = pygame.Surface(ICON_SIZE)
+        # new_img.fill((100,100,100))
         pygame.draw.rect(new_img, COLORS[ICON],
                          pygame.Rect((0, 0), ICON_SIZE))
-        new_img.blit(img, (5, 5))
-        return new_img
+        new_img.blit(tower_img, (5, 5))
+        self.screen.blit(new_img, position)
+
+        new_img_rect = tower_img.get_rect()
+        new_img_rect.center=(position[0] +ICON_SIZE[0]/2, position[1] + ICON_SIZE[1]/2)
+        return new_img_rect
+
+    def icon_select(self, img, point):
+        if img.collidepoint(point):
+            print('Clicking Icon')
+            return True
+        else:
+            print('Not Clicking Icon')
+            return False
+
+
 
     def run(self):
         key_actions = {
@@ -218,6 +235,8 @@ class TD_App(object):
 
         self.start_stage()
         fps_clk = pygame.time.Clock()
+        self.ready2make_tower = False
+        self.click_point = None
 
         while True:
             # draw screen
@@ -245,12 +264,12 @@ class TD_App(object):
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
                              pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
             # display tower buttons
-            button_img = self.make_button(tower_img)
-            self.screen.blit(button_img, (820, 30))
+            button_img = self.make_button((820,30))
             # display status
             self.disp_msg("Stage : " + str(self.stage), (20, 40))
             self.disp_msg("Score : " + str(self.score), (150, 40))
             self.disp_msg("Life : " + str(self.life), (280, 40))
+            self.disp_msg("Point : "+ str(self.point), (410, 40))
 
             pygame.display.update()
 
@@ -259,8 +278,19 @@ class TD_App(object):
                     sys.exit()
                 elif pygame.mouse.get_pressed()[0]: # when left click
                     click_spot = pygame.mouse.get_pos()
+                    click_used = False
                     # print('click spot is ', click_spot)
-                    self.create_tower(click_spot)
+                    if self.ready2make_tower == False and 4 < self.point:
+                        self.ready2make_tower = self.icon_select(button_img, click_spot)
+                        click_used = True
+
+                    if self.ready2make_tower == True  and click_used == False:
+                        if self.create_tower(click_spot):
+                            self.ready2make_tower = False
+                            self.point -=5
+                    else:
+                        print('Not enough point to build tower')
+
 
                     # print(pygame.mouse.get_pos())
                 elif event.type == pygame.KEYDOWN:
@@ -303,6 +333,7 @@ class TD_App(object):
                         DARTS.delete(temp_node)
                         BALLOONS.delete(lst[1][collide_detector])
                         self.score += 1
+                        self.point += 1
                 else:
                     DARTS.delete(temp_node)
                 temp_node = temp_node.tail
@@ -368,10 +399,11 @@ class TD_App(object):
         temp = Tower_unit()
         temp.set(position)
 
-        if temp.rect.collidelist(TOWERS.to_list()[0]) == -1:
+        if temp.rect.collidelist(TOWERS.to_list()[0]) == -1 and self.out_of_map(temp) == False:
             TOWERS.insert_value(Tower_unit())
             TOWERS.tail_node.head.value.set(position)
 
+            return True
         else:
             print('not working')
 
