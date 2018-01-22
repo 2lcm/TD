@@ -224,15 +224,13 @@ class TD_App(object):
         new_img_rect.center=(position[0] +ICON_SIZE[0]/2, position[1] + ICON_SIZE[1]/2)
         return new_img_rect
 
-    def icon_select(self, img, point):
-        if img.collidepoint(point):
+    def icon_select(self, icon_rect, point):
+        if icon_rect.collidepoint(point):
             print('Clicking Icon')
             return True
         else:
             print('Not Clicking Icon')
             return False
-
-
 
     def run(self):
         key_actions = {
@@ -271,7 +269,7 @@ class TD_App(object):
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
                              pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
             # display tower buttons
-            button_img = self.make_button((820,30))
+            button1 = self.make_button((820, 30))
             # display status
             self.disp_msg("Stage : " + str(self.stage), (20, 40))
             self.disp_msg("Score : " + str(self.score), (150, 40))
@@ -288,7 +286,7 @@ class TD_App(object):
                     click_used = False
                     # print('click spot is ', click_spot)
                     if self.ready2make_tower == False and 4 < self.point:
-                        self.ready2make_tower = self.icon_select(button_img, click_spot)
+                        self.ready2make_tower = self.icon_select(button1, click_spot)
                         click_used = True
 
                     if self.ready2make_tower == True  and click_used == False:
