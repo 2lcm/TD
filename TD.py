@@ -39,12 +39,16 @@ map_rect = map_rect.move(MAP_POINT)
 balloon_img = pygame.image.load("balloon.png")
 balloon_img = pygame.transform.scale(balloon_img, (ROAD_WIDTH, ROAD_WIDTH))
 
+balloon2_img = pygame.image.load("balloon2.png")
+balloon2_img = pygame.transform.scale(balloon2_img, (ROAD_WIDTH, ROAD_WIDTH))
+
 tower_img = pygame.image.load("tower.png")
 tower_img = pygame.transform.scale(tower_img, (ROAD_WIDTH, ROAD_WIDTH))
 
 dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
+
 
 class Unit(object):
     def __init__(self):
@@ -178,14 +182,17 @@ class TD_App(object):
         self.paused = False
         self.stage = 1
 
-    def draw_unit(self, unit, ty):
+    def draw_unit(self, unit, name):
         p = unit.rect.x, unit.rect.y
-        if ty == "dart":
+        # eval("self.screen.blit(" + name + "_img, p")
+        if name == "dart":
             self.screen.blit(unit.img, p)
-        elif ty == "tower":
+        elif name == "tower":
             self.screen.blit(tower_img, p)
-        else:
+        elif name == "balloon":
             self.screen.blit(balloon_img, p)
+        elif name == "balloon2":
+            self.screen.blit(balloon2_img, p)
 
     def draw_unit_test(self, unit, ty):
         p = unit.rect.x, unit.rect.y

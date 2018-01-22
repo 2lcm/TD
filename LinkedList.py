@@ -55,6 +55,7 @@ class LL(object):
             current_node = current_node.tail
 
     def test(self):
+
         current_node = self.head_node
         while True:
             if current_node == self.tail_node:
