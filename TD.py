@@ -46,7 +46,6 @@ dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
 
-
 class Unit(object):
     def __init__(self):
         self.x = 0
