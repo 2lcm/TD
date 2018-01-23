@@ -2,6 +2,7 @@ import pygame
 import sys
 import numpy as np
 import LinkedList
+import openpyxl
 
 # constants
 SCREEN_SIZE = 1000, 700
@@ -22,10 +23,9 @@ COLORS = [
     (int(0x55), int(0x55), int(0x55))
 ]
 
-# data structures (list) to control units
-# TOWERS = []
-# BALLOONS = []
-# DARTS = []
+# workbook
+wb = openpyxl.load_workbook('data.xlsx')
+ws = wb.get_sheet_by_name("balloon")
 
 TOWERS = LinkedList.LL()
 BALLOONS = LinkedList.LL()
@@ -36,9 +36,9 @@ map_img = pygame.transform.scale(map_img, MAP_SIZE)
 map_rect = map_img.get_rect()
 map_rect = map_rect.move(MAP_POINT)
 
-balloon_img = pygame.image.load("balloon.png")
-balloon_img = pygame.transform.scale(balloon_img, (ROAD_WIDTH, ROAD_WIDTH))
-balloon_img.set_alpha(120)
+balloon1_img = pygame.image.load("balloon.png")
+balloon1_img = pygame.transform.scale(balloon1_img, (ROAD_WIDTH, ROAD_WIDTH))
+balloon1_img.set_alpha(120)
 
 balloon2_img = pygame.image.load("balloon2.png")
 balloon2_img = pygame.transform.scale(balloon2_img, (ROAD_WIDTH, ROAD_WIDTH))
@@ -128,7 +128,7 @@ class Balloon_unit(Unit):
 
     def set(self, level):
         # self.rect = pygame.Rect(STARTING_POINT)
-        self.rect = balloon_img.get_rect()
+        self.rect = balloon1_img.get_rect()
         # self.rect = self.rect.fit(0, 0, 20, 20)  # the move
         # self.rect = self.rect.fit(ROAD_WIDTH - BALLOON_WIDTH, int(ROAD_WIDTH - BALLOON_WIDTH)/2, BALLOON_WIDTH, BALLOON_WIDTH)  # It is resized cented at left-upper point
         self.rect = self.rect.move(STARTING_POINT)
@@ -140,7 +140,7 @@ class Balloon_unit(Unit):
 
 
 class MyEvent(object):
-    def __init__(self, interval, able = True):
+    def __init__(self, interval, able=True):
         if (interval <=0) or (type(interval) != int):
             print("interval must be positive integer")
             sys.exit()
@@ -173,16 +173,26 @@ class TD_App(object):
         pygame.event.set_blocked((pygame.VIDEOEXPOSE, pygame.VIDEORESIZE))
 
         # status of the stage
-        self.budget = 0  # money to install unit
-        self.life = 0  # If life == 0 --> gameover
+        self.life = 10  # If life == 0 --> gameover
         self.score = 0
         self.point = 5
-        self.balloon_timer = None
+
+        # helper for balloon making
+        self.balloon_data_row = None
+        self.balloon_data_index = 0
+        self.balloon_timer = MyEvent(1000, False)
+        self.balloon_level = 0
+        self.balloon_count = 0
+
 
         # status of overall game
         self.gameover = False
         self.paused = False
         self.stage = 1
+
+        # mouse state
+        self.ready2make_tower = False
+        self.click_point = None
 
     def draw_unit(self, unit, name):
         p = unit.rect.x, unit.rect.y
@@ -191,8 +201,8 @@ class TD_App(object):
             self.screen.blit(unit.img, p)
         elif name == "tower":
             self.screen.blit(tower_img, p)
-        elif name == "balloon":
-            self.screen.blit(balloon_img, p)
+        elif name == "balloon1":
+            self.screen.blit(balloon1_img, p)
         elif name == "balloon2":
             self.screen.blit(balloon2_img, p)
 
@@ -240,8 +250,6 @@ class TD_App(object):
 
         self.start_stage()
         fps_clk = pygame.time.Clock()
-        self.ready2make_tower = False
-        self.click_point = None
 
         while True:
             # draw screen
@@ -256,7 +264,8 @@ class TD_App(object):
 
             current_node = BALLOONS.head_node.tail
             while current_node != BALLOONS.tail_node:
-                self.draw_unit(current_node.value, "balloon")
+                cur_bln = current_node.value
+                self.draw_unit(cur_bln, "balloon" + str(cur_bln.level))
                 current_node = current_node.tail
 
             current_node = DARTS.head_node.tail
@@ -305,7 +314,18 @@ class TD_App(object):
 
             # handle balloon timer
             if self.balloon_timer.inc():
-                self.create_balloon()
+                self.create_balloon(self.balloon_level)
+                if self.balloon_count == 0:
+                    self.balloon_data_index += 3
+                    try:
+                        if self.balloon_data_row[self.balloon_data_index].value:
+                            self.balloon_level = self.balloon_data_row[self.balloon_data_index].value
+                            self.balloon_count = self.balloon_data_row[self.balloon_data_index + 1].value
+                            self.balloon_timer.fin = MAXFPS * self.balloon_data_row[self.balloon_data_index + 2].value
+                        else:
+                            self.balloon_timer.able = False
+                    except IndexError:
+                        self.balloon_timer.able = False
 
             # handle towers
             current_node = TOWERS.head_node.tail
@@ -327,6 +347,7 @@ class TD_App(object):
 
                 current_node = current_node.tail
 
+            # handle darts
             temp_node = DARTS.head_node.tail
             while temp_node != DARTS.tail_node:
                 temp_dart = temp_node.value
@@ -336,7 +357,9 @@ class TD_App(object):
                     collide_detector = temp_dart.rect.collidelist(lst[0])
                     if not collide_detector == -1:
                         DARTS.delete(temp_node)
-                        BALLOONS.delete(lst[1][collide_detector])
+                        lst[0][collide_detector].level -= 1
+                        if lst[0][collide_detector].level == 0:
+                            BALLOONS.delete(lst[1][collide_detector])
                         self.score += 1
                         self.point += 1
                 else:
@@ -358,6 +381,12 @@ class TD_App(object):
                     BALLOONS.delete(current_node)
                     self.life -= 1
                 current_node = current_node.tail
+
+            if BALLOONS.head_node.tail == BALLOONS.tail_node and (not self.balloon_timer.able):
+                if self.stage < 5:
+                    self.stage += 1
+                    self.start_stage()
+
             if self.life < 1:
                 self.gameover = True
                 break
@@ -395,10 +424,11 @@ class TD_App(object):
         DARTS.insert_value(new_unit)
 
     # create balloon
-    def create_balloon(self):
+    def create_balloon(self, level):
         temp = Balloon_unit()
-        temp.set(1)
+        temp.set(level)
         BALLOONS.insert_value(temp)
+        self.balloon_count -= 1
 
     def create_tower(self, position):
         temp = Tower_unit()
@@ -414,9 +444,15 @@ class TD_App(object):
 
     # initialize variable and timer to start each stage
     def start_stage(self):
-        self.budget = 0
-        self.life = 1
-        self.balloon_timer = MyEvent(MAXFPS * 2)
+        self.balloon_data_row = ws[self.stage + 1]
+        self.balloon_data_index = 1
+        self.balloon_level = self.balloon_data_row[self.balloon_data_index].value
+        self.balloon_count = self.balloon_data_row[self.balloon_data_index + 1].value
+        self.balloon_timer.count = 0
+        self.balloon_timer.fin = MAXFPS * self.balloon_data_row[self.balloon_data_index + 2].value
+        self.balloon_timer.able = True
+        self.ready2make_tower = False
+        self.click_point = None
 
     def out_of_map(self, unit):
         X = map_rect.collidepoint(unit.rect.topleft)
@@ -431,7 +467,7 @@ class TD_App(object):
     def test(self):
         self.start_stage()
 
-        self.create_balloon()
+        self.create_balloon(1)
 
         while True:
             # draw screen
