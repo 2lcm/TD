@@ -17,6 +17,9 @@ MAXFPS = 50
 # colors,,kki
 INTERFACE, MSG, ICON = 0, 1, 2
 
+# button classifier
+MK_TOWER, MK_STAR, UPGRADE, PP = 0, 1, 2, 3
+
 COLORS = [
     (int(0xCC), int(0xCC), int(0xCC)),
     (0, 0, 0),
@@ -43,6 +46,15 @@ balloon1_img.set_alpha(120)
 balloon2_img = pygame.image.load("balloon2.png")
 balloon2_img = pygame.transform.scale(balloon2_img, (ROAD_WIDTH, ROAD_WIDTH))
 
+upgrade_img = pygame.image.load("upward.png")
+upgrade_img = pygame.transform.scale(upgrade_img, (ROAD_WIDTH, ROAD_WIDTH))
+
+play_img = pygame.image.load("play.png")
+play_img = pygame.transform.scale(play_img, (ROAD_WIDTH, ROAD_WIDTH))
+
+pause_img = pygame.image.load("pause.png")
+pause_img = pygame.transform.scale(pause_img, (ROAD_WIDTH, ROAD_WIDTH))
+
 tower1_img = pygame.image.load("tower.png")
 tower1_img = pygame.transform.scale(tower1_img, (ROAD_WIDTH, ROAD_WIDTH))
 
@@ -52,6 +64,12 @@ tower2_img = pygame.transform.scale(tower2_img, (ROAD_WIDTH, ROAD_WIDTH))
 dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
+
+star1_img = pygame.image.load("star.png")
+star1_img = pygame.transform.scale(star1_img, (ROAD_WIDTH, ROAD_WIDTH))
+
+star2_img = pygame.image.load("star2.png")
+star2_img = pygame.transform.scale(star2_img, (ROAD_WIDTH, ROAD_WIDTH))
 
 
 class Unit(object):
@@ -67,9 +85,9 @@ class Unit(object):
 
 
 class Dart_unit(Unit):
-    def __init__(self, tower, target_p):
+    def __init__(self, tower_p, target_p):
         super().__init__()
-        self.x, self.y = tower.x, tower.y
+        self.x, self.y = tower_p
         self.speed = target_p[0] - self.x, target_p[1] - self.y
         self.speed = [i/np.linalg.norm(self.speed) * 5 for i in self.speed]
         self.rect = dart_img.get_rect()
@@ -87,6 +105,7 @@ class Dart_unit(Unit):
             if self.speed[0] < 0:
                 deg += 180
         self.img = pygame.transform.rotate(dart_img, deg)
+        self.dest = target_p
 
 
 class Tower_unit(Unit):
@@ -96,8 +115,8 @@ class Tower_unit(Unit):
         self.charge = False
         self.timer = None
         self.timer2 = None
-        self.level = 1
-        self.id = 1
+        self.level = 2
+        self.iden = None
         self.dest = None
 
     def attack(self):
@@ -106,16 +125,18 @@ class Tower_unit(Unit):
     def position(self):
         return self.x, self.y
 
-    def set(self, position):
+    def set(self, position, iden):
         self.x, self.y = position
         self.rect = tower1_img.get_rect()
         self.rect.center = self.x, self.y
         self.timer = MyEvent(MAXFPS * 2)
+        self.iden = iden
 
     def upgrade(self):
         self.level += 1
         if self.level == 2:
             self.timer2 = MyEvent(MAXFPS/5, False)
+        return 5
 
     def find_target(self, ballooon):
         if np.sum((np.array([ballooon.x, ballooon.y]) - np.array([self.x, self.y]))**2) < self.attack_range**2:
@@ -168,6 +189,20 @@ class MyEvent(object):
             return False
 
 
+class Button(object):
+    def __init__(self, img, position, iden):
+        self.img = img
+        self.pos = position
+        self.iden = iden
+
+    def draw(self):
+        butt_img = pygame.Surface(ICON_SIZE)
+        butt_img.fill(COLORS[ICON])
+        butt_img.blit(self.img, (5, 5))
+        butt_img_rect = butt_img.get_rect(butt_img)
+        butt_img_rect.center = self.pos[0] - ICON_SIZE[0], self.pos[1] - ICON_SIZE[1]
+
+
 class TD_App(object):
     def __init__(self):
         # pygame setting
@@ -214,11 +249,10 @@ class TD_App(object):
             self.screen.blit(balloon1_img, p)
         elif name == "balloon2":
             self.screen.blit(balloon2_img, p)
-
-    def draw_unit_test(self, unit, ty):
-        p = unit.rect.x, unit.rect.y
-        print(p)
-        eval("self.screen.blit(" + ty + "_img, p)")
+        elif name == "star1":
+            self.screen.blit(star1_img, p)
+        elif name == "star2":
+            self.screen.blit(star2_img, p)
 
     def disp_msg(self, msg, topleft):
         x, y = topleft
@@ -241,10 +275,10 @@ class TD_App(object):
         return new_img_rect
 
     def ghost_tower(self, position1, tower_img):
-        # new_img = pygame.Surface(ICON_SIZE)
-        new_img = pygame.Surface.convert_alpha(tower_img)
+        new_img = pygame.Surface(ICON_SIZE)
+        # new_img = pygame.Surface.convert_alpha(tower_img)
         new_img.set_alpha(50)
-        # new_img.blit(tower_img, (5,5))
+        new_img.blit(tower_img, (5,5))
         img_center = position1[0] - ICON_SIZE[0] / 2, position1[1] - ICON_SIZE[1] / 2
         self.screen.blit(new_img, img_center)
 
@@ -267,151 +301,167 @@ class TD_App(object):
 
         while True:
             fps_clk.tick(MAXFPS)
-            # draw screen
-            self.screen.fill((255, 255, 255))
-            self.screen.blit(map_img, map_rect.topleft)
+            if self.paused == True:
+                self.screen.fill((255, 255, 255))
+                self.disp_msg('Game Paused', (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2))
+                pygame.display.update()
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        for key in key_actions:
+                            if event.key == eval("pygame.K_" + key):
+                                key_actions[key]()
+            else:
+                # draw screen
+                self.screen.fill((255, 255, 255))
+                self.screen.blit(map_img, map_rect.topleft)
 
-            # draw objects
-            current_node = TOWERS.head_node.tail
-            while current_node != TOWERS.tail_node:
-                cur_twr = current_node.value
-                self.draw_unit(current_node.value, "tower" + str(cur_twr.level))
-                current_node = current_node.tail
+                # draw objects
+                current_node = TOWERS.head_node.tail
+                while current_node != TOWERS.tail_node:
+                    cur_twr = current_node.value
+                    if cur_twr.iden == 0:
+                        self.draw_unit(cur_twr, "tower" + str(cur_twr.level))
+                    elif cur_twr.iden == 1:
+                        self.draw_unit(cur_twr, "star" + str(cur_twr.level))
+                    current_node = current_node.tail
 
-            current_node = BALLOONS.head_node.tail
-            while current_node != BALLOONS.tail_node:
-                cur_bln = current_node.value
-                self.draw_unit(cur_bln, "balloon" + str(cur_bln.level))
-                current_node = current_node.tail
+                current_node = BALLOONS.head_node.tail
+                while current_node != BALLOONS.tail_node:
+                    cur_bln = current_node.value
+                    self.draw_unit(cur_bln, "balloon" + str(cur_bln.level))
+                    current_node = current_node.tail
 
-            current_node = DARTS.head_node.tail
-            while current_node != DARTS.tail_node:
-                self.draw_unit(current_node.value, "dart")
-                current_node = current_node.tail
+                current_node = DARTS.head_node.tail
+                while current_node != DARTS.tail_node:
+                    self.draw_unit(current_node.value, "dart")
+                    current_node = current_node.tail
 
-            pygame.draw.rect(self.screen, COLORS[INTERFACE],
-                             pygame.Rect(0, 0, map_rect.right, map_rect.top))
-            pygame.draw.rect(self.screen, COLORS[INTERFACE],
-                             pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
+                pygame.draw.rect(self.screen, COLORS[INTERFACE],
+                                 pygame.Rect(0, 0, map_rect.right, map_rect.top))
+                pygame.draw.rect(self.screen, COLORS[INTERFACE],
+                                 pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
 
-            if self.ready2make_tower:
-                cursor_position = pygame.mouse.get_pos()
-                self.ghost_tower(cursor_position, tower1_img)
+                if self.ready2make_tower:
+                    cursor_position = pygame.mouse.get_pos()
+                    self.ghost_tower(cursor_position, tower1_img)
 
-            # display tower buttons
-            button1 = self.make_button((820, 30), tower1_img)
-            # display status
-            self.disp_msg("Stage : " + str(self.stage), (20, 40))
-            self.disp_msg("Score : " + str(self.score), (150, 40))
-            self.disp_msg("Life : " + str(self.life), (280, 40))
-            self.disp_msg("Point : "+ str(self.point), (410, 40))
+                # display tower buttons
+                button1 = self.make_button((820, 30), tower1_img)
+                # display status
+                self.disp_msg("Stage : " + str(self.stage), (20, 40))
+                self.disp_msg("Score : " + str(self.score), (150, 40))
+                self.disp_msg("Life : " + str(self.life), (280, 40))
+                self.disp_msg("Point : "+ str(self.point), (410, 40))
 
-            pygame.display.update()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                if pygame.mouse.get_pressed()[0]:  # when left click
-                    click_spot = pygame.mouse.get_pos()
-                    click_used = False
-                    # print('click spot is ', click_spot)
-                    if self.ready2make_tower == False and 4 < self.point:
-                        self.ready2make_tower = self.icon_select(button1, click_spot)
-                        click_used = True
+                pygame.display.update()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit()
+                    if pygame.mouse.get_pressed()[0]:  # when left click
+                        click_spot = pygame.mouse.get_pos()
+                        click_used = False
+                        # print('click spot is ', click_spot)
+                        if self.ready2make_tower == False and 4 < self.point:
+                            self.ready2make_tower = self.icon_select(button1, click_spot)
+                            click_used = True
 
-                    if self.ready2make_tower == True and click_used == False:
-                        if self.create_tower(click_spot):
-                            self.ready2make_tower = False
-                            self.point -= 5
-                    else:
-                        print('Not enough point to build tower')
-                elif event.type == pygame.KEYDOWN:
-                    for key in key_actions:
-                        if event.key == eval("pygame.K_" + key):
-                            key_actions[key]()
-
-            # handle balloon timer
-            if self.balloon_timer.inc():
-                self.create_balloon(self.balloon_level)
-                if self.balloon_count == 0:
-                    self.balloon_data_index += 3
-                    try:
-                        if self.balloon_data_row[self.balloon_data_index].value:
-                            self.balloon_level = self.balloon_data_row[self.balloon_data_index].value
-                            self.balloon_count = self.balloon_data_row[self.balloon_data_index + 1].value
-                            self.balloon_timer.fin = MAXFPS * self.balloon_data_row[self.balloon_data_index + 2].value
+                        if self.ready2make_tower == True and click_used == False:
+                            if self.create_tower(click_spot, 1):
+                                self.ready2make_tower = False
+                                self.point -= 5
                         else:
+                            print('You cannot build tower')
+                    elif event.type == pygame.KEYDOWN:
+                        for key in key_actions:
+                            if event.key == eval("pygame.K_" + key):
+                                key_actions[key]()
+
+                # handle balloon timer
+                if self.balloon_timer.inc():
+                    self.create_balloon(self.balloon_level)
+                    if self.balloon_count == 0:
+                        self.balloon_data_index += 3
+                        try:
+                            if self.balloon_data_row[self.balloon_data_index].value:
+                                self.balloon_level = self.balloon_data_row[self.balloon_data_index].value
+                                self.balloon_count = self.balloon_data_row[self.balloon_data_index + 1].value
+                                self.balloon_timer.fin = MAXFPS * self.balloon_data_row[self.balloon_data_index + 2].value
+                            else:
+                                self.balloon_timer.able = False
+                        except IndexError:
                             self.balloon_timer.able = False
-                    except IndexError:
-                        self.balloon_timer.able = False
 
-            # handle towers
-            current_node = TOWERS.head_node.tail
-            while current_node != TOWERS.tail_node:
-                # handle tower timer
-                twr = current_node.value
-                if twr.timer.inc():
-                    twr.charge = True  # tower charging is ok
-                    twr.timer.able = False  # suspend timer
-                if twr.timer2 is not None:
-                    if twr.timer2.inc():
-                        twr.timer.able = True
-                        twr.timer2.able = False
-                        self.create_dart(twr, twr.dest)
-                # do tower action
-                if twr.charge:
-                    temp_node = BALLOONS.head_node.tail
-                    while temp_node != BALLOONS.tail_node:
-                        if twr.find_target(temp_node.value):
-                            self.tower_attack(twr, temp_node.value)
+                # handle towers
+                current_node = TOWERS.head_node.tail
+                while current_node != TOWERS.tail_node:
+                    # handle tower timer
+                    twr = current_node.value
+                    if twr.timer.inc():
+                        twr.charge = True  # tower charging is ok
+                        twr.timer.able = False  # suspend timer
+                    if twr.timer2 is not None:
+                        if twr.timer2.inc():
                             twr.timer.able = True
-                            twr.charge = False
-                            break
-                        temp_node = temp_node.tail
+                            twr.timer2.able = False
+                            self.create_dart(twr.position(), twr.dest)
+                    # do tower action
+                    if twr.charge:
+                        temp_node = BALLOONS.head_node.tail
+                        while temp_node != BALLOONS.tail_node:
+                            if twr.find_target(temp_node.value):
+                                self.tower_attack(twr, temp_node.value)
+                                twr.timer.able = True
+                                twr.charge = False
+                                break
+                            temp_node = temp_node.tail
 
-                current_node = current_node.tail
+                    current_node = current_node.tail
 
-            # handle darts
-            temp_node = DARTS.head_node.tail
-            while temp_node != DARTS.tail_node:
-                temp_dart = temp_node.value
-                if not self.out_of_map(temp_dart):
-                    temp_dart.move()
-                    lst = BALLOONS.to_list()
-                    collide_detector = temp_dart.rect.collidelist(lst[0])
-                    if not collide_detector == -1:
+                # handle darts
+                temp_node = DARTS.head_node.tail
+                while temp_node != DARTS.tail_node:
+                    temp_dart = temp_node.value
+                    if not self.out_of_map(temp_dart):
+                        temp_dart.move()
+                        lst = BALLOONS.to_list()
+                        collide_detector = temp_dart.rect.collidelist(lst[0])
+                        if not collide_detector == -1:
+                            DARTS.delete(temp_node)
+                            lst[0][collide_detector].level -= 1
+                            if lst[0][collide_detector].level == 0:
+                                BALLOONS.delete(lst[1][collide_detector])
+                            self.score += 1
+                            self.point += 1
+                        else:
+                            if self.out_of_range((temp_dart.x, temp_dart.y), temp_dart.dest):
+                                DARTS.delete(temp_node)
+                    else:
                         DARTS.delete(temp_node)
-                        lst[0][collide_detector].level -= 1
-                        if lst[0][collide_detector].level == 0:
-                            BALLOONS.delete(lst[1][collide_detector])
-                        self.score += 1
-                        self.point += 1
-                else:
-                    DARTS.delete(temp_node)
-                temp_node = temp_node.tail
+                    temp_node = temp_node.tail
 
-            # do balloon action
-            current_node = BALLOONS.head_node.tail
-            while current_node != BALLOONS.tail_node:
-                bln = current_node.value
-                bln.move()
-                # change speed at turning point
-                if bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1]):
-                    bln.speed = [0, -1]
-                elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1] - 310):
-                    bln.speed = [1, 0]
-                elif self.out_of_map(bln):
-                    self.life -= bln.level
-                    BALLOONS.delete(current_node)
-                current_node = current_node.tail
+                # do balloon action
+                current_node = BALLOONS.head_node.tail
+                while current_node != BALLOONS.tail_node:
+                    bln = current_node.value
+                    bln.move()
+                    # change speed at turning point
+                    if bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1]):
+                        bln.speed = [0, -1]
+                    elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1] - 310):
+                        bln.speed = [1, 0]
+                    elif self.out_of_map(bln):
+                        self.life -= bln.level
+                        BALLOONS.delete(current_node)
+                    current_node = current_node.tail
 
-            if BALLOONS.head_node.tail == BALLOONS.tail_node and (not self.balloon_timer.able):
-                if self.stage < 5:
-                    self.stage += 1
-                    self.start_stage()
+                if BALLOONS.head_node.tail == BALLOONS.tail_node and (not self.balloon_timer.able):
+                    if self.stage < 5:
+                        self.stage += 1
+                        self.start_stage()
 
-            if self.life < 1:
-                self.gameover = True
-                break
+                if self.life < 1:
+                    self.gameover = True
+                    break
 
         if self.gameover:
             self.screen.fill((0, 0, 0))
@@ -437,8 +487,8 @@ class TD_App(object):
     def toggle_pause(self):
         self.paused = not self.paused
 
-    def create_dart(self, tower, target_p):
-        new_unit = Dart_unit(tower, target_p)
+    def create_dart(self, start_p, dest_p):
+        new_unit = Dart_unit(start_p, dest_p)
         DARTS.insert_value(new_unit)
 
     # create balloon
@@ -448,29 +498,46 @@ class TD_App(object):
         BALLOONS.insert_value(temp)
         self.balloon_count -= 1
 
-    def create_tower(self, position):
+    def create_tower(self, position, iden):
         temp = Tower_unit()
-        temp.set(position)
-
+        temp.set(position, iden)
         if temp.rect.collidelist(TOWERS.to_list()[0]) == -1 and self.out_of_map(temp) is False:
-            TOWERS.insert_value(Tower_unit())
-            TOWERS.tail_node.head.value.set(position)
-
+            TOWERS.insert_value(temp)
             return True
         else:
             print('not working')
 
     def tower_attack(self, tower, balloon):
-        if tower.id == 1:
+        if tower.iden == 0:
             if tower.level == 1:
-                self.create_dart(tower, (balloon.x, balloon.y))
+                self.create_dart(tower.position(), (balloon.x, balloon.y))
             elif tower.level == 2:
-                self.create_dart(tower, (balloon.x, balloon.y))
+                self.create_dart(tower.position(), (balloon.x, balloon.y))
                 tower.dest = balloon.x, balloon.y
                 tower.timer.able = False
                 tower.timer2.able = True
+            else:
+                raise NotImplementedError
+        elif tower.iden == 1:
+            deg = 2 * np.pi / 5
+            self.create_dart(tower.position(), (tower.x, tower.y - tower.attack_range))
+            self.create_dart(tower.position(), (
+                tower.x - int(tower.attack_range * np.sin(deg)),
+                tower.y - int(tower.attack_range * np.cos(deg))))
+            self.create_dart(tower.position(), (
+                tower.x - int(tower.attack_range * np.sin(2 * deg)),
+                tower.y - int(tower.attack_range * np.cos(2 * deg))))
+            self.create_dart(tower.position(), (
+                tower.x - int(tower.attack_range * np.sin(3 * deg)),
+                tower.y - int(tower.attack_range * np.cos(3 * deg))))
+            self.create_dart(tower.position(), (
+                tower.x - int(tower.attack_range * np.sin(4 * deg)),
+                tower.y - int(tower.attack_range * np.cos(4 * deg))))
         else:
             raise NotImplementedError
+
+    def out_of_range(self, tower_p, dart_p):
+        return np.sum(np.square(np.subtract(np.array(tower_p), np.array(dart_p)))) > 100 ** 2
 
     # initialize variable and timer to start each stage
     def start_stage(self):
@@ -501,22 +568,3 @@ class TD_App(object):
 if __name__ == '__main__':
     TD = TD_App()
     TD.run()
-
-# comments not to usage
-# test
-#########################
-## It is just for testing
-# test_tower = Tower_unit()
-# test_tower.attack()
-#########################
-#########################
-## It is just for testing
-# temp_balloon = Balloon_unit()
-# temp_balloon.move()
-############################################
-# def balloon_storage(self):
-#     for i in range(5):
-#         temp_balloon = Balloon_unit()
-#         temp_balloon.set(1)
-#         BALLOONS.append(temp_balloon)
-#############################################

@@ -3,7 +3,14 @@ order
 tower.png, tower2.png
 balloon.png
 balloon2.png
+upward.png
+play.png, pause.png
+star1.png
 
 Icons made by Freepik from www.flaticon.com is licensed by CC 3.0 BY
 Icons made by Baianat from www.flaticon.com is licensed by CC 3.0 BY
 Icons made by Freepik from www.flaticon.com is licensed by CC 3.0 BY
+Icons made by Smashicons from www.flaticon.com is licensed by CC 3.0 BY
+Icons made by Freepik from www.flaticon.com is licensed by CC 3.0 BY
+Icons made by Daniel Bruce from www.flaticon.com is licensed by CC 3.0 BY
+Icons made by Smashicons from www.flaticon.com is licensed by CC 3.0 BY
