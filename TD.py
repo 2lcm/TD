@@ -46,6 +46,9 @@ balloon2_img = pygame.transform.scale(balloon2_img, (ROAD_WIDTH, ROAD_WIDTH))
 tower_img = pygame.image.load("tower.png")
 tower_img = pygame.transform.scale(tower_img, (ROAD_WIDTH, ROAD_WIDTH))
 
+tower2_img = pygame.image.load("tower2.png")
+tower2_img = pygame.transform.scale(tower2_img, (ROAD_WIDTH, ROAD_WIDTH))
+
 dart_img = pygame.image.load("needle.png")
 dart_img = pygame.transform.flip(dart_img, True, False)
 dart_img = pygame.transform.scale(dart_img, (40, 40))
@@ -158,7 +161,7 @@ class MyEvent(object):
                 return True
         else:
             return False
-
+        
 
 class TD_App(object):
     def __init__(self):
@@ -237,11 +240,11 @@ class TD_App(object):
 
     def ghost_tower(self, position1):
         new_img = pygame.Surface(ICON_SIZE)
-        pygame.draw.rect(new_img, COLORS[ICON],
-                         pygame.Rect((0, 0), ICON_SIZE))
         new_img.set_alpha(50)
         new_img.blit(tower_img, (5,5))
         img_center = position1[0] - ICON_SIZE[0] / 2, position1[1] - ICON_SIZE[1] / 2
+        # print(position1)
+        print(img_center)
         self.screen.blit(new_img, img_center)
 
     def icon_select(self, icon_rect, point):
@@ -287,6 +290,10 @@ class TD_App(object):
                              pygame.Rect(0, 0, map_rect.right, map_rect.top))
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
                              pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
+            if self.ready2make_tower == True:
+                cursor_position = pygame.mouse.get_pos()
+                self.ghost_tower(cursor_position)
+
             # display tower buttons
             button1 = self.make_button((820, 30))
             # display status
@@ -299,9 +306,6 @@ class TD_App(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-                if self.ready2make_tower == True:
-                    cursor_position = pygame.mouse.get_pos()
-                    self.ghost_tower(cursor_position)
                 if pygame.mouse.get_pressed()[0]: # when left click
                     click_spot = pygame.mouse.get_pos()
                     click_used = False

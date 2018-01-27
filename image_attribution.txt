@@ -1,6 +1,6 @@
 order
 
-tower.png
+tower.png, tower2.png
 balloon.png
 balloon2.png
 
