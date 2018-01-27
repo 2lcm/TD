@@ -90,7 +90,6 @@ class Tower_unit(Unit):
     def __init__(self):
         super().__init__()
         self.attack_range = 100
-        #self.expense = 0
         self.charge = False
         self.timer = None
 
@@ -98,7 +97,7 @@ class Tower_unit(Unit):
         raise NotImplementedError
 
     def position(self):
-        return (self.x, self.y)
+        return self.x, self.y
 
     def set(self, position):
         self.x, self.y = position
@@ -184,7 +183,6 @@ class TD_App(object):
         self.balloon_level = 0
         self.balloon_count = 0
 
-
         # status of overall game
         self.gameover = False
         self.paused = False
@@ -225,14 +223,20 @@ class TD_App(object):
     def make_button(self, position, button_img=False):
         new_img = pygame.Surface(ICON_SIZE)
         new_img.fill(COLORS[ICON])
-        # pygame.draw.rect(new_img, COLORS[ICON],
-        #                  pygame.Rect((0, 0), ICON_SIZE))
-        new_img.blit(tower_img, (5, 5))
+        new_img.blit(button_img, (5, 5))
         self.screen.blit(new_img, position)
-
-        new_img_rect = tower_img.get_rect()
+        new_img_rect = new_img.get_rect()
         new_img_rect.center=(position[0] +ICON_SIZE[0]/2, position[1] + ICON_SIZE[1]/2)
         return new_img_rect
+
+    def ghost_tower(self, position1):
+        new_img = pygame.Surface(ICON_SIZE)
+        pygame.draw.rect(new_img, COLORS[ICON],
+                         pygame.Rect((0, 0), ICON_SIZE))
+        new_img.set_alpha(50)
+        new_img.blit(tower_img, (5,5))
+        img_center = position1[0] - ICON_SIZE[0] / 2, position1[1] - ICON_SIZE[1] / 2
+        self.screen.blit(new_img, img_center)
 
     def icon_select(self, icon_rect, point):
         if icon_rect.collidepoint(point):
@@ -278,7 +282,7 @@ class TD_App(object):
             pygame.draw.rect(self.screen, COLORS[INTERFACE],
                              pygame.Rect(map_rect.right, 0, SCREEN_SIZE[0] - map_rect.right, SCREEN_SIZE[1]))
             # display tower buttons
-            button1 = self.make_button((820, 30))
+            button1 = self.make_button((820, 30), tower_img)
             # display status
             self.disp_msg("Stage : " + str(self.stage), (20, 40))
             self.disp_msg("Score : " + str(self.score), (150, 40))
@@ -286,11 +290,13 @@ class TD_App(object):
             self.disp_msg("Point : "+ str(self.point), (410, 40))
 
             pygame.display.update()
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-                elif pygame.mouse.get_pressed()[0]: # when left click
+                if self.ready2make_tower == True:
+                    cursor_position = pygame.mouse.get_pos()
+                    self.ghost_tower(cursor_position)
+                if pygame.mouse.get_pressed()[0]: # when left click
                     click_spot = pygame.mouse.get_pos()
                     click_used = False
                     # print('click spot is ', click_spot)
@@ -304,9 +310,6 @@ class TD_App(object):
                             self.point -=5
                     else:
                         print('Not enough point to build tower')
-
-
-                    # print(pygame.mouse.get_pos())
                 elif event.type == pygame.KEYDOWN:
                     for key in key_actions:
                         if event.key == eval("pygame.K_" + key):
@@ -464,22 +467,6 @@ class TD_App(object):
 
     # function to test or debug
     def test(self):
-        self.start_stage()
-
-        self.create_balloon(1)
-
-        while True:
-            # draw screen
-            self.screen.fill((255, 255, 255))
-            self.screen.blit(map_img, (0, 0))
-            for i in range(len(BALLOONS)):
-                self.draw_unit(BALLOONS[i], "balloon")
-
-            pygame.display.update()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
         pass  # not to be compile error
 
 
