@@ -18,7 +18,7 @@ MAXFPS = 50
 INTERFACE, MSG, ICON = 0, 1, 2
 
 # button classifier
-MK_TOWER, MK_STAR, UPGRADE, PP = 0, 1, 2
+MK_TOWER, MK_STAR, UPGRADE, PP = 0, 1, 2, 3
 
 COLORS = [
     (int(0xCC), int(0xCC), int(0xCC)),
@@ -33,6 +33,7 @@ ws = wb.get_sheet_by_name("balloon")
 TOWERS = LinkedList.LL()
 BALLOONS = LinkedList.LL()
 DARTS = LinkedList.LL()
+BUTTON =[]
 
 map_img = pygame.image.load("map1.png")
 map_img = pygame.transform.scale(map_img, MAP_SIZE)
@@ -48,6 +49,7 @@ balloon2_img = pygame.transform.scale(balloon2_img, (ROAD_WIDTH, ROAD_WIDTH))
 
 upgrade_img = pygame.image.load("upward.png")
 upgrade_img = pygame.transform.scale(upgrade_img, (ROAD_WIDTH, ROAD_WIDTH))
+# upgrade_img.set_alpha()
 
 play_img = pygame.image.load("play.png")
 play_img = pygame.transform.scale(play_img, (ROAD_WIDTH, ROAD_WIDTH))
@@ -147,10 +149,10 @@ class Balloon_unit(Unit):
         # self.rect = self.rect.fit(ROAD_WIDTH - BALLOON_WIDTH, int(ROAD_WIDTH - BALLOON_WIDTH)/2, BALLOON_WIDTH, BALLOON_WIDTH)  # It is resized cented at left-upper point
         self.rect = self.rect.move(STARTING_POINT)
         self.x, self.y = self.rect.center
-        print("center is", self.rect.center)
+        # print("center is", self.rect.center)
         self.level = level
         self.speed = [1, 0]
-        print('balloon rect size is : ', self.rect)
+        # print('balloon rect size is : ', self.rect)
 
 
 class MyEvent(object):
@@ -174,31 +176,20 @@ class MyEvent(object):
             return False
         
 class Button(object):
-    def __init__(self, img, position):
+    def __init__(self, img, position, iden):
         self.img = img
         self.pos = position
+        self.butt_img_rect = None
+        self.iden = iden
 
-    def draw(self):
+    def draw(self, screen):
         butt_img = pygame.Surface(ICON_SIZE)
         butt_img.fill(COLORS[ICON])
         butt_img.blit(self.img, (5, 5))
-        butt_img_rect = butt_img.get_rect(butt_img)
-        butt_img_rect.center = self.pos[0] - ICON_SIZE[0], self.pos[1] - ICON_SIZE[1]
+        screen.blit(butt_img, self.pos)
+        self.butt_img_rect = butt_img.get_rect()
+        self.butt_img_rect.x, self.butt_img_rect.y = self.pos[0], self.pos[1]
 
-    def oper(self, id, click_spot):
-        self.id = id
-        self.click = click_spot
-        if id == 0:
-            TD_App.create_tower(self.id, self.click)
-        elif id == 1:
-            TD_App.create_tower(self.id, self.click)
-        elif id == 2:
-            OBJECT.upgrade()
-        elif id == 3:
-            TD_App.toggle_pause()
-
-        else:
-            print('Wrong id')
 
 class TD_App(object):
     def __init__(self):
@@ -216,6 +207,7 @@ class TD_App(object):
         self.life = 10  # If life == 0 --> gameover
         self.score = 0
         self.point = 5
+        self.sel_info = [None, -1]
 
         # helper for balloon making
         self.balloon_data_row = None
@@ -247,7 +239,7 @@ class TD_App(object):
 
     def draw_unit_test(self, unit, ty):
         p = unit.rect.x, unit.rect.y
-        print(p)
+        # print(p)
         eval("self.screen.blit(" + ty + "_img, p)")
 
     def disp_msg(self, msg, topleft):
@@ -276,16 +268,36 @@ class TD_App(object):
         new_img.blit(tower_img, (5,5))
         img_center = position1[0] - ICON_SIZE[0] / 2, position1[1] - ICON_SIZE[1] / 2
         # print(position1)
-        print(img_center)
+        # print(img_center)
         self.screen.blit(new_img, img_center)
 
-    def icon_select(self, icon_rect, point):
-        if icon_rect.collidepoint(point):
-            print('Clicking Icon')
-            return True
+    def icon_select(self, point):
+        for temp_button in BUTTON:
+            icon_rect = temp_button.butt_img_rect
+            iden = temp_button.iden
+            click_icon = False
+            if icon_rect.collidepoint(point):
+                print('Clicking Icon')
+                click_icon = True
+                print('identity : ', iden)
+                break
+            else:
+                print('Not Clicking Icon')
+
+        if click_icon == True:
+            if iden == 0 :
+                return [click_icon, iden]
+            # elif iden == 1:
+            #     return [click_icon, iden]
+            elif iden == 2:
+                self.upgrade()
+                return [False, None]
+            elif iden == 3:
+                self.toggle_pause()
+                return [False, None]
         else:
-            print('Not Clicking Icon')
-            return False
+            print('Wrong id')
+            return [click_icon, None]
 
     def run(self):
         key_actions = {
@@ -295,6 +307,15 @@ class TD_App(object):
 
         self.start_stage()
         fps_clk = pygame.time.Clock()
+
+        button1 = Button(tower_img, (820, 30), 0)
+        # button2 = Button(star1_img, (820, 100), 1)
+        button3 = Button(upgrade_img, (820, 300), 2)
+        button4 = Button(pause_img, (820, 500), 3)
+        BUTTON.append(button1)
+        # BUTTON.append(button2)
+        BUTTON.append(button3)
+        BUTTON.append(button4)
 
         while True:
             fps_clk.tick(MAXFPS)
@@ -339,7 +360,13 @@ class TD_App(object):
                     self.ghost_tower(cursor_position)
 
                 # display tower buttons
-                button1 = self.make_button((820, 30), tower_img)
+                # button1 = self.make_button((820, 30), tower_img)
+                button1.draw(self.screen)
+                # button2.draw(self.screen)
+                button3.draw(self.screen)
+                button4.draw(self.screen)
+
+
                 # display status
                 self.disp_msg("Stage : " + str(self.stage), (20, 40))
                 self.disp_msg("Score : " + str(self.score), (150, 40))
@@ -353,13 +380,15 @@ class TD_App(object):
                     if pygame.mouse.get_pressed()[0]: # when left click
                         click_spot = pygame.mouse.get_pos()
                         click_used = False
+                        temp_self_info = self.icon_select(click_spot)
                         # print('click spot is ', click_spot)
-                        if self.ready2make_tower == False and 4 < self.point:
-                            self.ready2make_tower = self.icon_select(button1, click_spot)
+                        if self.ready2make_tower == False and 4 < self.point and self.sel_info[1]!=None:
+                            self.sel_info = temp_self_info
+                            self.ready2make_tower = self.sel_info[0]
                             click_used = True
 
-                        if self.ready2make_tower == True  and click_used == False:
-                            if self.create_tower(click_spot):
+                        if self.ready2make_tower == True  and click_used == False and self.sel_info[1]!=None:
+                            if self.create_tower(click_spot, self.sel_info[1]):
                                 self.ready2make_tower = False
                                 self.point -=5
                         else:
@@ -485,7 +514,7 @@ class TD_App(object):
         BALLOONS.insert_value(temp)
         self.balloon_count -= 1
 
-    def create_tower(self, position):
+    def create_tower(self, position, iden):
         temp = Tower_unit()
         temp.set(position)
 
