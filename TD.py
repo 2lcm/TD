@@ -227,12 +227,22 @@ class TD_App(object):
         # new_img.fill((100,100,100))
         pygame.draw.rect(new_img, COLORS[ICON],
                          pygame.Rect((0, 0), ICON_SIZE))
+        # new_img.set_alpha(50)
         new_img.blit(tower_img, (5, 5))
         self.screen.blit(new_img, position)
 
         new_img_rect = tower_img.get_rect()
         new_img_rect.center=(position[0] +ICON_SIZE[0]/2, position[1] + ICON_SIZE[1]/2)
         return new_img_rect
+
+    def ghost_tower(self, position1):
+        new_img = pygame.Surface(ICON_SIZE)
+        pygame.draw.rect(new_img, COLORS[ICON],
+                         pygame.Rect((0, 0), ICON_SIZE))
+        new_img.set_alpha(50)
+        new_img.blit(tower_img, (5,5))
+        img_center = position1[0] - ICON_SIZE[0] / 2, position1[1] - ICON_SIZE[1] / 2
+        self.screen.blit(new_img, img_center)
 
     def icon_select(self, icon_rect, point):
         if icon_rect.collidepoint(point):
@@ -286,11 +296,13 @@ class TD_App(object):
             self.disp_msg("Point : "+ str(self.point), (410, 40))
 
             pygame.display.update()
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-                elif pygame.mouse.get_pressed()[0]: # when left click
+                if self.ready2make_tower == True:
+                    cursor_position = pygame.mouse.get_pos()
+                    self.ghost_tower(cursor_position)
+                if pygame.mouse.get_pressed()[0]: # when left click
                     click_spot = pygame.mouse.get_pos()
                     click_used = False
                     # print('click spot is ', click_spot)
