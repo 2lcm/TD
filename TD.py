@@ -222,11 +222,11 @@ class TD_App(object):
                 (x, y))
             y += 24
 
-    def make_button(self, position):
+    def make_button(self, position, button_img=False):
         new_img = pygame.Surface(ICON_SIZE)
-        # new_img.fill((100,100,100))
-        pygame.draw.rect(new_img, COLORS[ICON],
-                         pygame.Rect((0, 0), ICON_SIZE))
+        new_img.fill(COLORS[ICON])
+        # pygame.draw.rect(new_img, COLORS[ICON],
+        #                  pygame.Rect((0, 0), ICON_SIZE))
         new_img.blit(tower_img, (5, 5))
         self.screen.blit(new_img, position)
 
@@ -377,9 +377,8 @@ class TD_App(object):
                 elif bln.rect.center == (STARTING_POINT_CENTER[0] + 470, STARTING_POINT_CENTER[1] - 310):
                     bln.speed = [1, 0]
                 elif self.out_of_map(bln):
-                    print("?")
+                    self.life -= bln.level
                     BALLOONS.delete(current_node)
-                    self.life -= 1
                 current_node = current_node.tail
 
             if BALLOONS.head_node.tail == BALLOONS.tail_node and (not self.balloon_timer.able):
@@ -434,7 +433,7 @@ class TD_App(object):
         temp = Tower_unit()
         temp.set(position)
 
-        if temp.rect.collidelist(TOWERS.to_list()[0]) == -1 and self.out_of_map(temp) == False:
+        if temp.rect.collidelist(TOWERS.to_list()[0]) == -1 and self.out_of_map(temp) is False:
             TOWERS.insert_value(Tower_unit())
             TOWERS.tail_node.head.value.set(position)
 
